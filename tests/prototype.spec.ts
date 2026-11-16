@@ -8,7 +8,7 @@ test.use({
 test("teacher workflow and persistence", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("http://127.0.0.1:5173");
+  await page.goto("http://127.0.0.1:5173/#professor");
   await expect(
     page.getByRole("heading", { name: "Bom dia, Carol" }),
   ).toBeVisible();
@@ -75,7 +75,7 @@ test("teacher workflow and persistence", async ({ page }) => {
 });
 test("mobile navigation and layout", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("http://127.0.0.1:5173");
+  await page.goto("http://127.0.0.1:5173/#professor");
   await expect(page.locator(".mobile-nav")).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
@@ -93,7 +93,7 @@ test("mobile navigation and layout", async ({ page }) => {
   ).toBeLessThanOrEqual(390);
 });
 test("create lead and activity, and reschedule a lesson", async ({ page }) => {
-  await page.goto("http://127.0.0.1:5173");
+  await page.goto("http://127.0.0.1:5173/#professor");
   await page
     .locator(".sidebar")
     .getByRole("button", { name: "Leads", exact: true })
@@ -105,8 +105,18 @@ test("create lead and activity, and reschedule a lesson", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Novo Contato", exact: true }),
   ).toBeVisible();
-  await page.locator("#lead-0").dragTo(page.locator(".kanban-column").nth(1), {sourcePosition:{x:15,y:15},targetPosition:{x:100,y:45}});
-  await expect(page.locator(".kanban-column").nth(1).getByRole("heading",{name:"Fernanda Souza"})).toBeVisible();
+  await page
+    .locator("#lead-0")
+    .dragTo(page.locator(".kanban-column").nth(1), {
+      sourcePosition: { x: 15, y: 15 },
+      targetPosition: { x: 100, y: 45 },
+    });
+  await expect(
+    page
+      .locator(".kanban-column")
+      .nth(1)
+      .getByRole("heading", { name: "Fernanda Souza" }),
+  ).toBeVisible();
   await page.reload();
   await page
     .locator(".sidebar")
@@ -138,7 +148,10 @@ test("create lead and activity, and reschedule a lesson", async ({ page }) => {
   await page
     .locator(".calendar-event")
     .first()
-    .dragTo(page.locator(".day-column").nth(1), {sourcePosition:{x:12,y:12},targetPosition:{x:60,y:160}});
+    .dragTo(page.locator(".day-column").nth(1), {
+      sourcePosition: { x: 12, y: 12 },
+      targetPosition: { x: 60, y: 160 },
+    });
   await expect(
     page.locator(".day-column").nth(1).getByText("Mariana Costa"),
   ).toBeVisible();

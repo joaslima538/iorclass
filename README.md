@@ -45,3 +45,12 @@ Alternativa: **New → Static Site**, com build `npm ci --include=dev && npm run
 Para domínio próprio: abra **Settings → Custom Domains → Add Custom Domain** no serviço, informe o domínio e crie no provedor DNS os registros indicados pelo Render. Aguarde a verificação e a emissão automática do certificado HTTPS.
 
 O protótipo publicado continua usando dados fictícios e localStorage: cada navegador tem dados próprios. Nenhum dado é compartilhado entre dispositivos e nenhuma cobrança real é realizada.
+
+## Navegação da demonstração
+
+- `/#inicio` (ou raiz): landing page, recursos e planos.
+- `/#login` e `/#cadastro`: telas públicas com login demo para professor e aluno, sem autenticação ou cadastro real.
+- `/#professor`: painel do professor. O menu lateral tem rolagem independente, acesso ao app do aluno e botão **Sair e ver site**.
+- `/#aluno`: área navegável do aluno com aulas, anotações locais, resposta de atividade, situação de pagamentos e guia de prática. O botão **Visão do professor** retorna ao painel.
+
+Execute `npx playwright test --workers=1` para validar também navegação pública, saída, área do aluno e menu em janelas de pouca altura.

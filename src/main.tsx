@@ -1,3 +1,4 @@
+import { PublicExperience, StudentExperience } from "./experience";
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -202,15 +203,13 @@ function App() {
   ]);
   const [payments, setPayments] = useLocal(
     "ior-payments",
-    initialStudents
-      .slice(0, 8)
-      .map((s, i) => ({
-        id: s.id,
-        name: s.name,
-        value: i % 2 ? 280 : 320,
-        paid: i < 4,
-        due: i === 4 ? "12 nov." : "20 nov.",
-      })),
+    initialStudents.slice(0, 8).map((s, i) => ({
+      id: s.id,
+      name: s.name,
+      value: i % 2 ? 280 : 320,
+      paid: i < 4,
+      due: i === 4 ? "12 nov." : "20 nov.",
+    })),
   );
   const [modal, setModal] = useState("");
   const [toast, setToast] = useState("");
@@ -380,6 +379,22 @@ function App() {
           </div>
         ))}
         <div className="sidebar-bottom">
+          <button
+            className="nav"
+            onClick={() => {
+              window.location.hash = "aluno";
+            }}
+          >
+            <GraduationCap size={18} /> App do aluno <ExternalLink size={14} />
+          </button>
+          <button
+            className="nav"
+            onClick={() => {
+              window.location.hash = "inicio";
+            }}
+          >
+            <LogOut size={18} /> Sair e ver site
+          </button>
           <div className="upgrade">
             <span className="upgrade-icon">✧</span>
             <b>Mais tempo para ensinar.</b>
@@ -2160,45 +2175,11 @@ function App() {
                 <button
                   className="secondary full"
                   onClick={() => {
-                    setModal("portal");
+                    setModal("");
+                    window.location.hash = "aluno";
                   }}
                 >
                   <ExternalLink size={16} /> Visualizar app do aluno
-                </button>
-              </>
-            ) : modal === "portal" ? (
-              <>
-                <span className="eyebrow">APP DO ALUNO · DEMONSTRAÇÃO</span>
-                <h2>Olá, Mariana ✦</h2>
-                <p>Seu aprendizado continua por aqui.</p>
-                <div className="proposal">
-                  <h3>Sua próxima aula</h3>
-                  <p>Canto · Segunda-feira, 09:00</p>
-                  <span className="status purple">Online · Google Meet</span>
-                </div>
-                <div className="proposal">
-                  <h3>Recado da Carol</h3>
-                  <p>
-                    Continue com os exercícios de respiração. Você está
-                    evoluindo muito bem!
-                  </p>
-                </div>
-                <button
-                  className="secondary full"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(
-                        "PIX-DEMONSTRACAO-SEM-VALOR",
-                      );
-                      notify(
-                        "Texto de demonstração copiado. Não é uma chave PIX real.",
-                      );
-                    } catch {
-                      notify("Cópia indisponível neste navegador.");
-                    }
-                  }}
-                >
-                  <Copy size={16} /> Copiar PIX de demonstração
                 </button>
               </>
             ) : (
@@ -2300,4 +2281,24 @@ function Stat({
     </div>
   );
 }
-createRoot(document.getElementById("root")!).render(<App />);
+function ExperienceRouter() {
+  const [route, setRoute] = useState(
+    () => window.location.hash.slice(1) || "inicio",
+  );
+  useEffect(() => {
+    const update = () => {
+      setRoute(window.location.hash.slice(1) || "inicio");
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", update);
+    return () => window.removeEventListener("hashchange", update);
+  }, []);
+  return route === "professor" ? (
+    <App />
+  ) : route === "aluno" ? (
+    <StudentExperience />
+  ) : (
+    <PublicExperience route={route} />
+  );
+}
+createRoot(document.getElementById("root")!).render(<ExperienceRouter />);
