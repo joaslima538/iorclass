@@ -41,7 +41,7 @@ export function PublicExperience({ route }: { route: string }) {
   const [open, setOpen] = useState(false);
   const auth = route === "login" || route === "cadastro";
   return (
-    <div className="public-site">
+    <div className={auth ? "public-site auth-page" : "public-site"}>
       <header className="public-header">
         <Brand />
         <button

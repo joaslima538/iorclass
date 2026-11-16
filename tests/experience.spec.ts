@@ -120,3 +120,18 @@ test("public and student pages fit mobile viewport", async ({ page }) => {
     fullPage: true,
   });
 });
+
+test('login and registration fit the first screen at common viewport sizes',async({page})=>{
+ for(const viewport of [{width:1366,height:680},{width:1280,height:720},{width:1440,height:900},{width:390,height:844},{width:375,height:667}]){
+  await page.setViewportSize(viewport);
+  for(const route of ['login','cadastro']){
+   await page.goto('http://127.0.0.1:5173/#'+route);
+   const demo=page.getByRole('button',{name:'Login demo · Professor'});
+   await expect(demo).toBeVisible();
+   const bottom=await page.locator('.auth-disclaimer').boundingBox();
+   expect(bottom!.y+bottom!.height,`${route} footer at ${viewport.width}x${viewport.height}`).toBeLessThanOrEqual(viewport.height);
+   expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeLessThanOrEqual(viewport.height);
+  }
+ }
+ await page.setViewportSize({width:1366,height:680});await page.goto('http://127.0.0.1:5173/#cadastro');await page.screenshot({path:'/tmp/iorclass-compact-auth.png',fullPage:true});
+});
