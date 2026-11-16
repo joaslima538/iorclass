@@ -54,3 +54,7 @@ O protótipo publicado continua usando dados fictícios e localStorage: cada nav
 - `/#aluno`: área navegável do aluno com aulas, anotações locais, resposta de atividade, situação de pagamentos e guia de prática. O botão **Visão do professor** retorna ao painel.
 
 Execute `npx playwright test --workers=1` para validar também navegação pública, saída, área do aluno e menu em janelas de pouca altura.
+
+## Compartilhamento social
+
+O HTML contém Open Graph e Twitter Card com URL pública `https://iorclass.onrender.com/` e capa PNG local de 1200 × 630. Ao trocar o domínio, atualize canonical, `og:url` e URLs de imagem em `index.html`. A capa pode ser regenerada com `node scripts/generate-social-cover.mjs` (Chromium local e dependências de desenvolvimento necessários). O WhatsApp pode manter a prévia anterior em cache após o deploy.
