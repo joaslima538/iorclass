@@ -2,6 +2,10 @@ import { PublicExperience, StudentExperience } from "./experience";
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  Eye,
+  EyeOff,
+  Undo2,
+  Redo2,
   House,
   CalendarDays,
   Users,
@@ -211,6 +215,14 @@ function App() {
       due: i === 4 ? "12 nov." : "20 nov.",
     })),
   );
+  const [hideSummary, setHideSummary] = useLocal("ior-hide-summary", false);
+  const incomingForecast = payments.reduce((total, payment) => total + payment.value, 0);
+  const incomingReceived = payments.filter((payment) => payment.paid).reduce((total, payment) => total + payment.value, 0);
+  // This prototype records incoming payments only; there are no expense entries yet.
+  const outgoingForecast = 0;
+  const outgoingPaid = 0;
+  const summaryMoney = (value: number) => hideSummary ? "••••" : money(value);
+  const summaryCount = (value: number) => hideSummary ? "••" : value;
   const [modal, setModal] = useState("");
   const [toast, setToast] = useState("");
   const [query, setQuery] = useState("");
@@ -446,44 +458,44 @@ function App() {
           )}
         </header>
         <div className="content">
-              <section className="stats overview-stats">
-                <Stat
-                  label="Recebido em novembro"
-                  value={money(
-                    6840 + payments.filter((p) => p.paid).length * 0,
-                  )}
-                  icon={<Wallet size={19} />}
-                  note="12,8% em relação a outubro"
-                  trend
-                />
-                <Stat
-                  label="A receber este mês"
-                  value={money(
-                    payments
-                      .filter((p) => !p.paid)
-                      .reduce((s, p) => s + p.value, 0) + 2300,
-                  )}
-                  icon={<Clock size={19} />}
-                  note={`${payments.filter((p) => !p.paid).length + 4} pagamentos pendentes`}
-                  accent="orange"
-                />
-                <Stat
-                  label="Aulas realizadas"
-                  value={`${24 + lessons.filter((l) => l.status === "Realizada").length}`}
-                  suffix="/ 40"
-                  icon={<GraduationCap size={20} />}
-                  note="65% do seu planejamento mensal"
-                  progress
-                />
-                <Stat
-                  label="Alunos ativos"
-                  value={String(students.length)}
-                  icon={<Users size={19} />}
-                  note="2 novos alunos este mês"
-                  trend
-                  accent="pink"
-                />
-              </section>
+          <section className="stats overview-stats" aria-label="Resumo financeiro e de aulas">
+            <article className="stat summary-profit">
+              <button
+                className="summary-visibility"
+                onClick={() => setHideSummary(!hideSummary)}
+                aria-label={hideSummary ? "Mostrar valores do cabeçalho" : "Ocultar valores do cabeçalho"}
+                aria-pressed={hideSummary}
+                title={hideSummary ? "Mostrar valores do cabeçalho" : "Ocultar valores do cabeçalho"}
+              >
+                {hideSummary ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+              <strong className="summary-profit-value">{summaryMoney(incomingReceived - outgoingPaid)}</strong>
+              <span className="summary-period">Lucro em Novembro 2026</span>
+            </article>
+            <article className="stat summary-finance">
+              <div>
+                <span className="stat-top">Previsão de Entradas:</span>
+                <strong>{summaryMoney(incomingForecast)}</strong>
+                <span className="stat-top">Entradas Realizadas:</span>
+                <strong className="summary-positive">{summaryMoney(incomingReceived)}</strong>
+              </div>
+              <Undo2 className="summary-flow incoming" size={46} aria-hidden="true" />
+            </article>
+            <article className="stat summary-finance">
+              <div>
+                <span className="stat-top">Previsão de Saídas:</span>
+                <strong>{summaryMoney(outgoingForecast)}</strong>
+                <span className="stat-top">Saídas realizadas:</span>
+                <strong className="summary-negative">{summaryMoney(outgoingPaid)}</strong>
+              </div>
+              <Redo2 className="summary-flow outgoing" size={46} aria-hidden="true" />
+            </article>
+            <article className="stat summary-lessons">
+              <div><CalendarDays size={17} /><span>Aulas pendentes</span><strong>{summaryCount(lessons.filter((lesson) => lesson.status === "Pendente").length)}</strong></div>
+              <div className="summary-cancelled"><X size={17} /><span>Aulas canceladas</span><strong>{summaryCount(lessons.filter((lesson) => lesson.status === "Cancelada").length)}</strong></div>
+              <div className="summary-positive"><CheckCheck size={17} /><span>Aulas realizadas</span><strong>{summaryCount(lessons.filter((lesson) => lesson.status === "Realizada").length)}</strong></div>
+            </article>
+          </section>
           {page === "Início" ? (
             <>
               <div className="page-heading">

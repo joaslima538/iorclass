@@ -164,3 +164,26 @@ test('daily reading text stays legible on desktop and mobile', async ({page}) =>
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
  }
 });
+
+test('header summary uses demo records, hides persistently and has no sidebar gutter', async ({page}) => {
+ await page.goto('http://127.0.0.1:5173/#professor');
+ const header=page.getByRole('region',{name:'Resumo financeiro e de aulas'});
+ await expect(header.locator('.summary-profit-value')).toHaveText(/1\.200,00/);
+ await expect(header.locator('.summary-finance').first()).toContainText('Previsão de Entradas:');
+ await expect(header.locator('.summary-finance').first().locator('strong').first()).toHaveText(/2\.400,00/);
+ await expect(header.locator('.summary-lessons strong')).toHaveText(['2','0','2']);
+ const edges=await page.evaluate(()=>({main:document.querySelector('main')!.getBoundingClientRect().left,content:document.querySelector('.content')!.getBoundingClientRect().left,header:document.querySelector('.overview-stats')!.getBoundingClientRect().left,sidebar:document.querySelector('.sidebar')!.getBoundingClientRect().right}));
+ expect(edges.content).toBe(edges.sidebar);
+ expect(edges.header).toBe(edges.main);
+ await page.getByRole('button',{name:'Ocultar valores do cabeçalho'}).click();
+ await expect(header.locator('.summary-profit-value')).toHaveText('••••');
+ await expect(header.locator('.summary-lessons strong')).toHaveText(['••','••','••']);
+ await page.reload();
+ await expect(header.locator('.summary-profit-value')).toHaveText('••••');
+ await page.getByRole('button',{name:'Mostrar valores do cabeçalho'}).click();
+ await page.getByTitle('Marcar como realizada').first().click();
+ await expect(header.locator('.summary-lessons strong')).toHaveText(['1','0','3']);
+ await page.setViewportSize({width:375,height:667});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+ await page.screenshot({path:'/tmp/iorclass-header-mobile.png',fullPage:true});
+});
