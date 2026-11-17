@@ -11,7 +11,7 @@ import {
   House,
   LogOut,
   Menu,
-  Sparkles,
+  MessageCircle,
   Users,
   Wallet,
   Video,
@@ -194,7 +194,7 @@ export function PublicExperience({ route }: { route: string }) {
               className="demo-login"
               onClick={() => go(role === "professor" ? "professor" : "aluno")}
             >
-              <Sparkles size={17} /> Login demo ·{" "}
+              <MessageCircle size={17} /> Login demo ·{" "}
               {role === "professor" ? "Professor" : "Aluno"}{" "}
               <ArrowRight size={16} />
             </button>
@@ -285,7 +285,7 @@ export function PublicExperience({ route }: { route: string }) {
                 )}
               </div>
               <div className="art-note">
-                <Sparkles size={23} />
+                <MessageCircle size={23} />
                 <div>
                   Menos tarefas.<b>Mais tempo para ensinar.</b>
                 </div>
@@ -300,13 +300,13 @@ export function PublicExperience({ route }: { route: string }) {
           <section className="landing-features" id="recursos">
             <span className="eyebrow">TUDO CONECTADO, TUDO MAIS SIMPLES</span>
             <h2>Aulas, alunos e financeiro.</h2>
-            <p>Troque as planilhas por um espaço pensado para você.</p>
+            <p>Consulte horários, cadastros e pagamentos em um só lugar.</p>
             <div>
               {[
                 [
                   CalendarDays,
                   "Agenda de aulas",
-                  "Organize encontros, acompanhe presenças e encontre espaço para novas possibilidades.",
+                  "Organize horários, acompanhe presenças e reagende suas aulas.",
                 ],
                 [
                   Users,
@@ -375,7 +375,7 @@ export function PublicExperience({ route }: { route: string }) {
                   "a cada 6 meses",
                   "Um passo a mais no seu planejamento",
                 ],
-                ["Anual", "717", "por ano", "O melhor valor para sua jornada"],
+                ["Anual", "717", "por ano", "Plano anual"],
               ].map(([p, v, d, text], i) => (
                 <article className={i === 2 ? "featured" : ""} key={p}>
                   {i === 2 && (
@@ -506,7 +506,7 @@ export function StudentExperience() {
             })}
           </nav>
           <div className="student-sidebar-note">
-            <Sparkles size={22} />
+            <MessageCircle size={22} />
             <p>
               Cada pequeno passo
               <br />
@@ -769,7 +769,7 @@ export function StudentExperience() {
             </section>
           )}
           <footer className="student-footer">
-            Cada encontro, uma nova possibilidade. <span>iorCLASS · Demo</span>
+            Área do aluno. <span>iorCLASS · Demo</span>
           </footer>
         </section>
       </div>

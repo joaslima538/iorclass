@@ -151,3 +151,16 @@ test('reference identity, teacher indicators and mobile menu remain usable', asy
   await exit.click();
   await expect(page.getByRole('heading',{name:/Gestão para/})).toBeVisible();
 });
+
+test('daily reading text stays legible on desktop and mobile', async ({page}) => {
+ for(const viewport of [{width:1366,height:768},{width:390,height:844}]) {
+  await page.setViewportSize(viewport);
+  await page.goto('http://127.0.0.1:5173/#professor');
+  for(const selector of ['.lesson-info > b','.lesson-info > span','.date-tabs button','.task','.stat-top','.page-heading p']) {
+   const size=await page.locator(selector).first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize));
+   expect(size,`${selector} at ${viewport.width}`).toBeGreaterThanOrEqual(selector.includes('date-tabs') ? 12 : 13);
+  }
+  await expect(page.locator('.floating-ai')).toContainText('Ajuda');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+ }
+});

@@ -24,7 +24,7 @@ import {
   Video,
   MapPin,
   MoreHorizontal,
-  Sparkles,
+  MessageCircle,
   Send,
   X,
   CheckCheck,
@@ -439,7 +439,7 @@ function App() {
           {notices && (
             <div className="notifications">
               <b>Suas notificações</b>
-              <p>✦ Beatriz enviou uma atividade para correção.</p>
+              <p>Beatriz enviou uma atividade para correção.</p>
               <p>✓ Mariana confirmou a aula de hoje.</p>
               <p>Seu resumo de novembro está disponível.</p>
             </div>
@@ -620,25 +620,21 @@ function App() {
                   <section className="ai-card">
                     <div className="ai-card-top">
                       <span className="sparkle-box">
-                        <Sparkles size={21} />
+                        <MessageCircle size={21} />
                       </span>
                       <span className="ai-label">
-                        SUA NOVA ASSISTENTE <b>BETA</b>
+                        ASSISTENTE iorIA <b>DEMO</b>
                       </span>
                       <ArrowUpRight size={17} />
                     </div>
                     <h3>
-                      Menos tarefas.
-                      <br />
-                      Organize sua rotina.
+                      Ajuda com a gestão
                     </h3>
                     <p>
-                      Conte o que precisa e deixe a iorIA
-                      <br />
-                      te ajudar com a rotina.
+                      Consulte pagamentos e organize as aulas com ações de demonstração.
                     </p>
                     <button onClick={() => setModal("ai")}>
-                      <span>Pergunte à iorIA...</span>
+                      <span>Abrir assistente</span>
                       <span className="ai-send">
                         <ArrowRight size={16} />
                       </span>
@@ -690,9 +686,9 @@ function App() {
                 <div className="section-heading">
                   <div>
                     <h3>
-                      Um olhar nas suas finanças <span className="little-dot" />
+                      Resumo financeiro <span className="little-dot" />
                     </h3>
-                    <p>Organização também é tranquilidade.</p>
+                    <p>Recebimentos e previsão do mês.</p>
                   </div>
                   <button
                     className="text-button"
@@ -735,7 +731,7 @@ function App() {
             <>
               <div className="page-heading">
                 <div>
-                  <div className="eyebrow">SEU ESPAÇO, SUAS POSSIBILIDADES</div>
+                  <div className="eyebrow">GESTÃO DE AULAS</div>
                   <h1>
                     {selected && page === "Alunos" ? selected.name : page}
                   </h1>
@@ -743,15 +739,15 @@ function App() {
                     {
                       {
                         Agenda:
-                          "Cada encontro é uma oportunidade de transformar.",
+                          "Consulte os horários e organize seus agendamentos.",
                         Alunos:
-                          "Histórias diferentes. O mesmo cuidado em cada uma.",
+                          "Cadastre alunos e acompanhe aulas e pagamentos.",
                         Financeiro:
-                          "Clareza para planejar. Tranquilidade para ensinar.",
-                        Atividades: "Aprendizado que continua além da aula.",
-                        Leads: "Novas conexões, futuros aprendizados.",
-                        Relatórios: "Seus resultados contam uma boa história.",
-                        Arquivos: "Seus materiais, sempre ao alcance.",
+                          "Acompanhe entradas, pendências e recebimentos.",
+                        Atividades: "Crie atividades e acompanhe as entregas dos alunos.",
+                        Leads: "Organize os contatos interessados nas suas aulas.",
+                        Relatórios: "Consulte os resultados e exporte seus relatórios.",
+                        Arquivos: "Organize os materiais compartilhados nas aulas.",
                       }[page]
                     }
                   </p>
@@ -1475,7 +1471,7 @@ function App() {
                     </section>
                   </div>
                   <section className="ai-report">
-                    <Sparkles />
+                    <MessageCircle />
                     <div>
                       <h3>Converse com seus números</h3>
                       <p>
@@ -1511,7 +1507,7 @@ function App() {
         onClick={() => setModal("ai")}
         title="Abrir assistente iorIA"
       >
-        <Sparkles size={22} />
+        <MessageCircle size={20} /><span>Ajuda</span>
       </button>
       <nav className="mobile-nav">
         {[
@@ -1551,7 +1547,7 @@ function App() {
             {modal === "ai" ? (
               <>
                 <span className="modal-symbol">
-                  <Sparkles size={27} />
+                  <MessageCircle size={27} />
                 </span>
                 <span className="eyebrow">SUA ASSISTENTE DE ROTINA</span>
                 <h2>Oi, Carol. Vamos simplificar?</h2>
@@ -1591,7 +1587,7 @@ function App() {
                 {proposal && (
                   <div className="proposal">
                     <b>
-                      <Sparkles size={15} />{" "}
+                      <MessageCircle size={15} />{" "}
                       {ai.toLowerCase().includes("concluir")
                         ? "Proposta de alteração"
                         : "Seu resumo de demonstração"}
@@ -1631,7 +1627,7 @@ function App() {
               <>
                 <span className="eyebrow">NOVOS COMEÇOS</span>
                 <h2>Novo aluno</h2>
-                <p>Um cadastro simples para uma jornada incrível.</p>
+                <p>Preencha os dados do aluno e configure as aulas.</p>
                 <div className="wizard-steps">
                   {[
                     "Dados",
