@@ -10,7 +10,7 @@ test("public site, registration, demo login and logout", async ({ page }) => {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("http://127.0.0.1:5173/");
   await expect(
-    page.getByRole("heading", { name: /Você nasceu/ }),
+    page.getByRole("heading", { name: /Gestão para/ }),
   ).toBeVisible();
   await page.screenshot({ path: "/tmp/iorclass-landing.png", fullPage: true });
   await page.getByRole("button", { name: "Login demo", exact: true }).click();
@@ -22,18 +22,18 @@ test("public site, registration, demo login and logout", async ({ page }) => {
     .getByRole("button", { name: "Sair e ver site" })
     .click();
   await expect(
-    page.getByRole("heading", { name: /Você nasceu/ }),
+    page.getByRole("heading", { name: /Gestão para/ }),
   ).toBeVisible();
   await page
     .locator(".public-header")
     .getByRole("button", { name: "Entrar", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Que bom ter você aqui." }),
+    page.getByRole("heading", { name: "Login Professor" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Cadastre-se grátis" }).click();
   await expect(
-    page.getByRole("heading", { name: "Comece sua jornada." }),
+    page.getByRole("heading", { name: "Criar uma conta" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Login demo · Professor" }).click();
   await expect(
@@ -134,4 +134,20 @@ test('login and registration fit the first screen at common viewport sizes',asyn
   }
  }
  await page.setViewportSize({width:1366,height:680});await page.goto('http://127.0.0.1:5173/#cadastro');await page.screenshot({path:'/tmp/iorclass-compact-auth.png',fullPage:true});
+});
+
+test('reference identity, teacher indicators and mobile menu remain usable', async ({page}) => {
+  await page.goto('http://127.0.0.1:5173/#professor');
+  await expect(page.locator('.plan-strip')).toContainText('FREE');
+  await expect(page.locator('.overview-stats .stat')).toHaveCount(4);
+  await page.locator('.sidebar').getByRole('button',{name:'Agenda',exact:true}).click();
+  await expect(page.locator('.overview-stats')).toBeVisible();
+  await expect(page.locator('.topbar')).toHaveCSS('background-color','rgb(52, 75, 250)');
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('.mobile-menu').click();
+  await expect(page.locator('.teacher-profile')).toBeVisible();
+  const exit=page.locator('.sidebar').getByRole('button',{name:'Sair e ver site'});
+  await exit.scrollIntoViewIfNeeded();
+  await exit.click();
+  await expect(page.getByRole('heading',{name:/Gestão para/})).toBeVisible();
 });

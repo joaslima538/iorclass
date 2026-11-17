@@ -150,12 +150,12 @@ function Owl({ small = false }: { small?: boolean }) {
     >
       <path
         d="M5 7l10 4a19 19 0 0110 0l10-4-2 17c-2 9-10 13-13 14C12 35 6 30 6 23Z"
-        fill="currentColor"
+        fill="#101c50"
       />
       <circle cx="14" cy="21" r="7" fill="white" />
       <circle cx="26" cy="21" r="7" fill="white" />
-      <circle cx="15" cy="21" r="3" fill="currentColor" />
-      <circle cx="25" cy="21" r="3" fill="currentColor" />
+      <circle cx="15" cy="21" r="3" fill="#101c50" />
+      <circle cx="25" cy="21" r="3" fill="#101c50" />
       <path d="m18 28 2 3 2-3" fill="#FBC407" />
     </svg>
   );
@@ -351,13 +351,12 @@ function App() {
             <small>GESTÃO PARA PROFESSORES</small>
           </span>
         </a>
-        <button className="workspace" onClick={() => setModal("profile")}>
-          <span className="workspace-icon">C</span>
-          <span>
-            Meu espaço<small>Estúdio Carol Hends</small>
-          </span>
-          <ChevronDown size={14} />
+        <button className="teacher-profile" onClick={() => setModal("profile")}>
+          <img src="/images/carol.jpg" alt="Perfil de Carol Hends" />
+          <b>Carol Hends</b><small>Professora de canto</small>
         </button>
+        <div className="sidebar-summary"><span><Users size={21} /><b>{students.length}</b> alunos</span><span><CalendarDays size={21} /><b>{lessons.length}</b> aulas</span></div>
+        <button className="plan-strip" onClick={() => setModal("plans")}><b>Você está utilizando o plano FREE.</b><span>Conhecer os planos</span></button>
         {nav.map((group) => (
           <div className="navgroup" key={group.title}>
             <label>{group.title}</label>
@@ -395,14 +394,6 @@ function App() {
           >
             <LogOut size={18} /> Sair e ver site
           </button>
-          <div className="upgrade">
-            <span className="upgrade-icon">✧</span>
-            <b>Mais tempo para ensinar.</b>
-            <p>O resto, deixa com a gente.</p>
-            <button onClick={() => setModal("plans")}>
-              Conhecer o plano Pro <ArrowUpRight size={14} />
-            </button>
-          </div>
           <button className="nav" onClick={() => setModal("settings")}>
             <Settings size={18} />
             Configurações
@@ -411,14 +402,6 @@ function App() {
             <HelpCircle size={18} />
             Central de ajuda <ArrowUpRight size={14} />
           </button>
-          <div className="profile" onClick={() => setModal("profile")}>
-            <img src="/images/carol.jpg" />
-            <span>
-              <b>Carol Hends</b>
-              <small>Professora de canto</small>
-            </span>
-            <ChevronDown size={15} />
-          </div>
         </div>
       </aside>
       <main>
@@ -463,62 +446,7 @@ function App() {
           )}
         </header>
         <div className="content">
-          {page === "Início" ? (
-            <>
-              <div className="page-heading">
-                <div>
-                  <div className="eyebrow">
-                    SEGUNDA-FEIRA, 16 DE NOVEMBRO DE 2026
-                  </div>
-                  <h1>
-                    Bom dia, Carol <span className="wave">☀</span>
-                  </h1>
-                  <p>Seu talento transforma vidas. Vamos cuidar do resto?</p>
-                </div>
-                <button className="primary" onClick={() => setModal("event")}>
-                  <Plus size={17} /> Novo agendamento
-                </button>
-              </div>
-              <section className="hero">
-                <div className="hero-copy">
-                  <span className="hero-kicker">
-                    <span /> MAIS LEVEZA NO SEU DIA
-                  </span>
-                  <h2>
-                    Você cuida do ensino.
-                    <br />A gente cuida da organização.
-                  </h2>
-                  <p>
-                    Sua semana está cheia de possibilidades.
-                    <br />E tudo o que você precisa está aqui.
-                  </p>
-                  <button onClick={() => navigate("Agenda")}>
-                    Vamos para a agenda <ArrowUpRight size={16} />
-                  </button>
-                  <div className="hero-dots">
-                    <i />
-                    <i />
-                    <i />
-                  </div>
-                </div>
-                <div className="hero-image">
-                  <img src="/images/studio.jpg" />
-                  <div className="image-tint" />
-                  <div className="floating-note">
-                    <span className="floating-check">
-                      <Check size={18} />
-                    </span>
-                    <span>
-                      Mais organização.<b>Mais tempo para o que importa.</b>
-                    </span>
-                  </div>
-                  <span className="image-caption">
-                    FEITO POR PROFESSORES, PARA PROFESSORES.
-                  </span>
-                </div>
-                <span className="hero-flower">✧</span>
-              </section>
-              <section className="stats">
+              <section className="stats overview-stats">
                 <Stat
                   label="Recebido em novembro"
                   value={money(
@@ -556,6 +484,22 @@ function App() {
                   accent="pink"
                 />
               </section>
+          {page === "Início" ? (
+            <>
+              <div className="page-heading">
+                <div>
+                  <div className="eyebrow">
+                    SEGUNDA-FEIRA, 16 DE NOVEMBRO DE 2026
+                  </div>
+                  <h1>
+                    Bom dia, Carol <span className="wave">☀</span>
+                  </h1>
+                  <p>Confira suas aulas, tarefas e pagamentos.</p>
+                </div>
+                <button className="primary" onClick={() => setModal("event")}>
+                  <Plus size={17} /> Novo agendamento
+                </button>
+              </div>
               <div className="dashboard-grid">
                 <section className="card today">
                   <div className="section-heading">
@@ -564,7 +508,7 @@ function App() {
                         Suas aulas de hoje{" "}
                         <span className="count">{lessons.length}</span>
                       </h3>
-                      <p>Um passo de cada vez, uma evolução a cada aula.</p>
+                      <p>Acompanhe os horários e confirme as aulas realizadas.</p>
                     </div>
                     <button
                       className="text-button"
@@ -668,7 +612,7 @@ function App() {
                       aulas pela frente
                     </span>
                     <span>
-                      Você está indo muito bem <span>✧</span>
+                      Resumo das aulas
                     </span>
                   </div>
                 </section>
@@ -686,7 +630,7 @@ function App() {
                     <h3>
                       Menos tarefas.
                       <br />
-                      Mais tempo para ensinar.
+                      Organize sua rotina.
                     </h3>
                     <p>
                       Conte o que precisa e deixe a iorIA
@@ -700,7 +644,7 @@ function App() {
                       </span>
                     </button>
                     <div className="ai-foot">
-                      <span /> Sempre por perto, sempre com você.
+                      <span /> Assistente de demonstração.
                     </div>
                   </section>
                   <section className="card tasks">
@@ -737,7 +681,7 @@ function App() {
                       </button>
                     ))}
                     <div className="task-bottom">
-                      Pequenos passos, grandes resultados. <span>✧</span>
+                      Acompanhe suas tarefas.
                     </div>
                   </section>
                 </div>
@@ -781,9 +725,9 @@ function App() {
                 </div>
               </section>
               <footer className="footer">
-                Feito com cuidado para quem ensina com amor.
+                Gestão para professores particulares.
                 <span>
-                  iorCLASS © 2026 <span>✧</span>
+                  iorCLASS © 2026
                 </span>
               </footer>
             </>

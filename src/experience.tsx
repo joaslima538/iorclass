@@ -89,14 +89,14 @@ export function PublicExperience({ route }: { route: string }) {
           <section className="auth-story">
             <span className="public-pill">FEITO PARA QUEM ENSINA</span>
             <h1>
-              Seu talento merece
+              Organize suas aulas,
               <br />
-              uma rotina mais leve.
+              agenda e finanças.
             </h1>
             <p>
-              Alunos, aulas e finanças em harmonia.
+              Tudo o que você precisa para a gestão das aulas.
               <br />
-              Mais espaço para você fazer a diferença.
+              Feito para professores particulares.
             </p>
             <div className="auth-quote">
               <span>“</span>
@@ -112,11 +112,11 @@ export function PublicExperience({ route }: { route: string }) {
             <button className="text-button" onClick={() => go("inicio")}>
               <ChevronLeft size={15} /> Voltar ao site
             </button>
-            <span className="eyebrow">BEM-VINDO AO SEU PRÓXIMO CAPÍTULO</span>
+            <span className="eyebrow">ACESSO iorCLASS</span>
             <h2>
               {route === "cadastro"
-                ? "Comece sua jornada."
-                : "Que bom ter você aqui."}
+                ? "Criar uma conta"
+                : "Login Professor"}
             </h2>
             <p>
               {route === "cadastro"
@@ -221,21 +221,10 @@ export function PublicExperience({ route }: { route: string }) {
           <section className="landing-hero">
             <div>
               <span className="public-pill">
-                <span /> SEU ENSINO, NOVAS POSSIBILIDADES
+                <span /> iorCLASS · GESTÃO PARA PROFESSORES
               </span>
-              <h1>
-                Você nasceu
-                <br />
-                para <em>ensinar.</em>
-                <br />A organização
-                <br />
-                deixa com a gente.
-              </h1>
-              <p>
-                Aulas, alunos e finanças em um só lugar.
-                <br />
-                Conheça a gestão que acompanha o seu talento.
-              </p>
+              <h1>Gestão para <em>professores particulares.</em></h1>
+              <p>Organize aulas, alunos e finanças em um só lugar.<br />Mais praticidade para sua rotina de ensino.</p>
               <div className="landing-actions">
                 <button className="primary" onClick={() => go("cadastro")}>
                   Quero meus 30 dias grátis <ArrowUpRight size={18} />
@@ -265,7 +254,7 @@ export function PublicExperience({ route }: { route: string }) {
                   SEGUNDA-FEIRA, NOVAS POSSIBILIDADES
                 </span>
                 <h2>Bom dia, Carol ☀</h2>
-                <p>Hoje é um bom dia para transformar.</p>
+                <p>Confira a programação de hoje.</p>
                 <div className="landing-mini-stats">
                   <div>
                     Recebido no mês
@@ -280,7 +269,7 @@ export function PublicExperience({ route }: { route: string }) {
                     </b>
                   </div>
                 </div>
-                <h3>Um encontro, muitas descobertas.</h3>
+                <h3>Próximas aulas</h3>
                 {["Mariana Costa", "João Pedro", "Beatriz Almeida"].map(
                   (n, i) => (
                     <div className="preview-lesson" key={n}>
@@ -305,23 +294,23 @@ export function PublicExperience({ route }: { route: string }) {
             </div>
           </section>
           <div className="landing-trust">
-            PARA QUEM ENSINA COM PROPÓSITO <span>✧</span> Canto e música{" "}
-            <span>✧</span> Idiomas <span>✧</span> Reforço e muito mais
+            PARA QUEM ENSINA COM PROPÓSITO <span>·</span> Canto e música{" "}
+            <span>·</span> Idiomas <span>·</span> Reforço e muito mais
           </div>
           <section className="landing-features" id="recursos">
             <span className="eyebrow">TUDO CONECTADO, TUDO MAIS SIMPLES</span>
-            <h2>Seu dia a dia, em harmonia.</h2>
+            <h2>Aulas, alunos e financeiro.</h2>
             <p>Troque as planilhas por um espaço pensado para você.</p>
             <div>
               {[
                 [
                   CalendarDays,
-                  "Uma agenda que acompanha você",
+                  "Agenda de aulas",
                   "Organize encontros, acompanhe presenças e encontre espaço para novas possibilidades.",
                 ],
                 [
                   Users,
-                  "Cada aluno, uma história",
+                  "Cadastro e acompanhamento",
                   "Dados, evolução e atividades em uma ficha para acompanhar cada conquista.",
                 ],
                 [
@@ -363,7 +352,7 @@ export function PublicExperience({ route }: { route: string }) {
             <div className="student-teaser">
               <GraduationCap size={32} />
               <h3>Olá, Mariana ✦</h3>
-              <p>Pronta para o próximo passo?</p>
+              <p>Acompanhe suas próximas aulas.</p>
               <div>
                 <CalendarDays size={18} />
                 <span>
@@ -375,7 +364,7 @@ export function PublicExperience({ route }: { route: string }) {
           </section>
           <section className="landing-pricing" id="planos">
             <span className="eyebrow">INVISTA EM UMA ROTINA MAIS LEVE</span>
-            <h2>Seu talento merece esse cuidado.</h2>
+            <h2>Escolha seu plano.</h2>
             <p>30 dias grátis para descobrir uma nova forma de organizar.</p>
             <div className="pricing-grid">
               {[
@@ -425,7 +414,7 @@ export function PublicExperience({ route }: { route: string }) {
           </section>
           <footer className="public-footer">
             <Brand />
-            <p>Feito com cuidado para quem ensina com amor.</p>
+            <p>Gestão para professores particulares.</p>
             <button onClick={() => go("login")}>
               Entrar no meu espaço <ArrowRight size={15} />
             </button>
@@ -563,7 +552,7 @@ export function StudentExperience() {
                 >
                   Ver minhas aulas <ArrowRight size={16} />
                 </button>
-                <span>✧</span>
+                <span>·</span>
               </section>
               <div className="student-overview">
                 <article className="card">
