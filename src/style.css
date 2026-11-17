@@ -815,8 +815,8 @@ h3 {
   color: #a196b4;
 }
 .complete:hover {
-  background: #e8f6ec;
-  color: #4b9472;
+  background: #edf1ff;
+  color: #344bfa;
 }
 .more {
   padding: 0;
@@ -4308,7 +4308,7 @@ td {
 h1,h2,h3,h4 { letter-spacing:0; }
 button:focus-visible,a:focus-visible { outline-color:#0781ff; }
 input:focus,textarea:focus,select:focus { outline-color:#98c9ff; border-color:#0879ed; }
-.primary { background:#238b28; border-color:#238b28; border-radius:4px; box-shadow:none; font-weight:600; }
+.primary { background:#344bfa; border-color:#344bfa; border-radius:4px; box-shadow:none; font-weight:600; }
 .secondary { border-radius:4px; }
 .sidebar { background:#eef2f6; padding:22px 16px 0; border-color:#dce2e9; scrollbar-color:#99a4b2 transparent; }
 .sidebar .logo { color:#142355; padding-left:7px; }
@@ -4356,16 +4356,16 @@ h1 { font-size:28px; }.wave { display:none; }
 .status { border-radius:3px; font-size:10px; }.green { color:#237838; background:#e9f5eb; }.purple { color:#2864ac; background:#eaf2fc; }.amber { color:#966400; background:#fff3d4; }
 .tabs button.selected { color:#2558be; background:#eaf1fd; }.date-tabs button.selected,.text-button:hover { color:#176bed; }.date-tabs .selected:after { background:#176bed; }
 .lesson-line,.lesson-line.pink { background:#3b82e9; }.lesson-info>b { color:#495663; font-size:12px; }.lesson-info>span { color:#7b8796; font-size:11px; }
-.task { font-size:11px; color:#657184; }.complete { color:#238b28; border-color:#a8d0af; }
+.task { font-size:11px; color:#657184; }.complete { color:#344bfa; border-color:#c1cbff; }
 .public-site { font-family:Barlow,Arial,sans-serif; color:#344354; }
 .public-header { max-width:none; padding:24px max(30px, calc((100vw - 1160px)/2)); background:#0875e8; color:white; }
-.public-header .public-brand,.public-header nav { color:white; }.public-header .primary { background:#2ca442; border-color:#2ca442; }
+.public-header .public-brand,.public-header nav { color:white; }.public-header .primary { background:#344bfa; border-color:#344bfa; }
 .brand-owl { background:#101c50; border-radius:0 0 7px 7px; clip-path:polygon(0 0,27% 13%,73% 13%,100% 0,100% 100%,0 100%); }
 .public-brand { color:#142355; }
 .landing-hero { max-width:none; margin:0; padding:55px max(30px, calc((100vw - 1160px)/2)) 65px; background:#0875e8; color:white; gap:45px; }
 .landing-hero h1 { font-size:48px; font-weight:700; line-height:1.12; letter-spacing:0; text-transform:uppercase; }
 .landing-hero h1 em { color:#ffda32; }.landing-hero > div > p,.landing-hero > div > small,.landing-demo { color:white; }
-.landing-hero .public-pill { color:#d5eaff; letter-spacing:1px; }.landing-hero .primary { background:#2ca442; border-color:#2ca442; font-size:13px; }
+.landing-hero .public-pill { color:#d5eaff; letter-spacing:1px; }.landing-hero .primary { background:#344bfa; border-color:#344bfa; font-size:13px; }
 .product-preview { transform:none; border-radius:7px; box-shadow:0 12px 30px #00428e30; color:#445366; background:white; }
 .product-preview .public-brand { color:#142355; }.product-preview .preview-header { border-bottom:1px solid #e1e6ee; }
 .landing-trust { background:#eff3f7; color:#65758a; }.landing-features article,.pricing-grid article { border-radius:6px; box-shadow:none; }
@@ -4424,7 +4424,7 @@ main { margin-left:240px; }
 .eyebrow { font-size:11px; letter-spacing:1px; color:#6c7a8d; margin-bottom:8px; }
 .page-heading { margin-bottom:26px; }.page-heading p { font-size:15px; margin-top:8px; color:#68788b; }
 .primary,.secondary { border-radius:6px; min-height:40px; font-size:14px; padding:10px 16px; font-weight:500; box-shadow:none; }
-.primary { background:#238448; border-color:#238448; }.secondary { border-color:#d4dde7; color:#485a70; }
+.primary { background:#344bfa; border-color:#344bfa; }.secondary { border-color:#d4dde7; color:#485a70; }
 .card { border-color:#dce3eb; border-radius:9px; background:#fff; }
 .section-heading { padding:23px 24px 0; }.section-heading p { font-size:13px; line-height:1.5; color:#6b7b8f; }
 .text-button { font-size:13px !important; color:#336ab5; }
