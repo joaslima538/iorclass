@@ -2,6 +2,8 @@ import { PublicExperience, StudentExperience } from "./experience";
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  Cake,
+  Trophy,
   Eye,
   EyeOff,
   Undo2,
@@ -77,7 +79,15 @@ const initialStudents = [
   color: ["#eee7ff", "#e4f2ee", "#fff0df", "#e5edff"][i % 4],
   paid: i % 4 !== 2,
 }));
-type Student = (typeof initialStudents)[number];
+type Student = (typeof initialStudents)[number] & { birthDate?: string };
+type Appointment = { id: string; day: number; title: string; time: string; done: boolean };
+
+const demoDates = ["Seg, 16", "Ter, 17", "Qua, 18", "Qui, 19", "Sex, 20"];
+const demoGroups = ["Vozes em harmonia", "Inglês em boa companhia"];
+const demoBirthdays = [
+  { name: "Mariana Costa", day: 19 },
+  { name: "Lucas Ferreira", day: 26 },
+];
 type Lesson = {
   id: number;
   student: string;
@@ -198,8 +208,24 @@ function App() {
     "ior-lead-stages",
     {} as Record<string, number>,
   );
-  const [students, setStudents] = useLocal("ior-students", initialStudents);
+  const [students, setStudents] = useLocal<Student[]>("ior-students", initialStudents);
   const [lessons, setLessons] = useLocal("ior-lessons", seedLessons);
+  const [day, setDay] = useState(0);
+  const eventDay = page === "Início" ? day : 0;
+  const [appointments, setAppointments] = useLocal<Appointment[]>("ior-personal-appointments", []);
+  const dayLessons = lessons.filter((lesson) => (lesson.day ?? 0) === day)
+    .sort((a, b) => a.time.localeCompare(b.time));
+  const pendingLessons = lessons.filter((lesson) => lesson.status === "Pendente").length;
+  const completedLessons = lessons.filter((lesson) => lesson.status === "Realizada").length;
+  const now = new Date();
+  const birthdayMonth = String(now.getMonth() + 1).padStart(2, "0");
+  const birthdayMonthName = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(now);
+  const birthdays = students.flatMap((student) => {
+    const date = student.birthDate;
+    return date?.slice(5, 7) === birthdayMonth
+      ? [{ id: student.id, name: student.name, day: Number(date.slice(8, 10)) }]
+      : [];
+  }).sort((a, b) => a.day - b.day);
   const [tasks, setTasks] = useLocal("ior-tasks", [
     { text: "Preparar atividade de técnica vocal", done: false },
     { text: "Enviar material para a Mariana", done: false },
@@ -233,6 +259,7 @@ function App() {
   const [proposal, setProposal] = useState(false);
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [email, setEmail] = useState("");
   const [course, setCourse] = useState("Canto e técnica vocal");
   const [value, setValue] = useState("320");
@@ -278,7 +305,7 @@ function App() {
   }
   function complete(id: number) {
     setLessons(
-      lessons.map((l) => (l.id === id ? { ...l, status: "Realizada" } : l)),
+      current => current.map((l) => (l.id === id && l.status === "Pendente" ? { ...l, status: "Realizada" } : l)),
     );
     notify("Aula marcada como realizada. Bom trabalho!");
   }
@@ -286,7 +313,7 @@ function App() {
     if (!name.trim()) return;
     setStudents([
       ...students,
-      { id: Date.now(), name, email, course, color: "#eee7ff", paid: false },
+      { id: Date.now(), name, email, course, birthDate: birthDate || undefined, color: "#eee7ff", paid: false },
     ]);
     setLessons([
       ...lessons,
@@ -314,6 +341,7 @@ function App() {
     setModal("");
     setStep(0);
     setName("");
+    setBirthDate("");
     notify("Aluno cadastrado com aula e cobrança de demonstração.");
   }
   function exportData() {
@@ -491,9 +519,9 @@ function App() {
               <Redo2 className="summary-flow outgoing" size={46} aria-hidden="true" />
             </article>
             <article className="stat summary-lessons">
-              <div><CalendarDays size={17} /><span>Aulas pendentes</span><strong>{summaryCount(lessons.filter((lesson) => lesson.status === "Pendente").length)}</strong></div>
+              <div><CalendarDays size={17} /><span>Aulas pendentes</span><strong>{summaryCount(pendingLessons)}</strong></div>
               <div className="summary-cancelled"><X size={17} /><span>Aulas canceladas</span><strong>{summaryCount(lessons.filter((lesson) => lesson.status === "Cancelada").length)}</strong></div>
-              <div className="summary-positive"><CheckCheck size={17} /><span>Aulas realizadas</span><strong>{summaryCount(lessons.filter((lesson) => lesson.status === "Realizada").length)}</strong></div>
+              <div className="summary-positive"><CheckCheck size={17} /><span>Aulas realizadas</span><strong>{summaryCount(completedLessons)}</strong></div>
             </article>
           </section>
           {page === "Início" ? (
@@ -501,60 +529,47 @@ function App() {
               <div className="page-heading">
                 <div>
                   <div className="eyebrow">
-                    SEGUNDA-FEIRA, 16 DE NOVEMBRO DE 2026
+                    AGENDA DEMONSTRATIVA · NOVEMBRO DE 2026
                   </div>
-                  <h1>
-                    Bom dia, Carol <span className="wave">☀</span>
-                  </h1>
-                  <p>Confira suas aulas, tarefas e pagamentos.</p>
+                  <h1>Bom dia, Carol</h1>
+                  <p>Confira suas aulas e compromissos.</p>
                 </div>
-                <button className="primary" onClick={() => setModal("event")}>
-                  <Plus size={17} /> Novo agendamento
-                </button>
+                <div className="home-actions">
+                  <button className="secondary" onClick={() => setModal("birthdays")} aria-label="Aniversariantes do mês" title="Aniversariantes do mês">
+                    <Cake size={20} />
+                  </button>
+                  <button className="primary" onClick={() => setModal("event")}>
+                    <Plus size={17} /> Novo agendamento
+                  </button>
+                </div>
               </div>
-              <div className="dashboard-grid">
+              <section className="lesson-progress" aria-labelledby="lesson-progress-title">
+                <h2 id="lesson-progress-title">Progresso das aulas</h2>
+                <div className="trophy-counts" aria-live="polite">
+                  <div><strong>{summaryCount(pendingLessons)}</strong><span>Pendentes</span></div>
+                  <Trophy size={76} strokeWidth={1.5} aria-hidden="true" />
+                  <div><strong>{summaryCount(completedLessons)}</strong><span>Realizadas</span></div>
+                </div>
+              </section>
+              <div className="date-tabs dashboard-dates" role="group" aria-label="Dia da agenda demonstrativa">
+                {demoDates.map((date, i) => (
+                  <button key={date} className={day === i ? "selected" : ""}
+                    aria-pressed={day === i} onClick={() => setDay(i)}>
+                    {date}
+                  </button>
+                ))}
+              </div>
+              <div className="daily-grid">
                 <section className="card today">
                   <div className="section-heading">
-                    <div>
-                      <h3>
-                        Suas aulas de hoje{" "}
-                        <span className="count">{lessons.length}</span>
-                      </h3>
-                      <p>Acompanhe os horários e confirme as aulas realizadas.</p>
-                    </div>
-                    <button
-                      className="text-button"
-                      onClick={() => navigate("Agenda")}
-                    >
+                    <h3>{day === 0 ? "Aulas de Hoje" : `Aulas de ${16 + day} de novembro`}</h3>
+                    <button className="text-button" onClick={() => navigate("Agenda")}>
                       Ver agenda <ArrowRight size={15} />
                     </button>
                   </div>
-                  <div className="date-tabs">
-                    {[
-                      "Seg, 16",
-                      "Ter, 17",
-                      "Qua, 18",
-                      "Qui, 19",
-                      "Sex, 20",
-                    ].map((d, i) => (
-                      <button
-                        key={d}
-                        className={week === i ? "selected" : ""}
-                        onClick={() => setWeek(i)}
-                      >
-                        {d}
-                        {i === 0 && <span />}
-                      </button>
-                    ))}
-                    <button onClick={() => setWeek((week + 1) % 5)}>
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
                   <div className="lesson-list">
-                    {(week === 0
-                      ? lessons
-                      : lessons.slice(week % 2, (week % 2) + 2)
-                    ).map((l) => (
+                    {dayLessons.length === 0 && <p className="daily-empty">Nenhuma aula neste dia.</p>}
+                    {dayLessons.map((l) => (
                       <div className="lesson" key={l.id}>
                         <div className="lesson-time">
                           <b>{l.time}</b>
@@ -571,26 +586,18 @@ function App() {
                             ) : (
                               <MapPin size={12} />
                             )}{" "}
-                            {l.online ? "Google Meet" : "Presencial"}{" "}
-                            <span>·</span> 60 min
+                            {l.online ? "Google Meet" : "Presencial"}
                           </small>
                         </div>
                         <div className="lesson-action">
-                          {l.status === "Realizada" ? (
-                            <span className="status green">
-                              <Check size={12} /> Realizada
-                            </span>
-                          ) : (
-                            <>
-                              <span className="status purple">Agendada</span>
-                              <button
-                                className="complete"
-                                onClick={() => complete(l.id)}
-                                title="Marcar como realizada"
-                              >
-                                <Check size={16} />
-                              </button>
-                            </>
+                          <span className={`status ${l.status === "Realizada" ? "green" : "purple"}`}>
+                            {l.status}
+                          </span>
+                          {l.status === "Pendente" && (
+                            <button className="complete" onClick={() => complete(l.id)}
+                              title="Marcar como realizada" aria-label={`Confirmar realização da aula de ${l.student}`}>
+                              <Check size={16} />
+                            </button>
                           )}
                         </div>
                         <button
@@ -608,26 +615,44 @@ function App() {
                       </div>
                     ))}
                   </div>
-                  <div className="today-footer">
-                    <span>
-                      <span className="green-dot" />
-                      {
-                        lessons.filter((l) => l.status === "Realizada").length
-                      }{" "}
-                      aulas realizadas
-                    </span>
-                    <span>
-                      <Clock size={13} />
-                      {
-                        lessons.filter((l) => l.status === "Pendente").length
-                      }{" "}
-                      aulas pela frente
-                    </span>
-                    <span>
-                      Resumo das aulas
-                    </span>
-                  </div>
                 </section>
+                <section className="card appointments" aria-labelledby="appointments-title">
+                  <div className="section-heading">
+                    <h3 id="appointments-title">Compromissos do dia</h3>
+                    <button className="text-button" onClick={() => setModal("appointment")}>
+                      <Plus size={16} /> Adicionar
+                    </button>
+                  </div>
+                  {appointments.every((item) => item.day !== day) && (
+                    <p className="daily-empty">Nenhum compromisso pessoal neste dia.</p>
+                  )}
+                  <ul className="daily-items">
+                    {appointments.filter((item) => item.day === day)
+                      .sort((a, b) => a.time.localeCompare(b.time)).map((item) => (
+                        <li key={item.id}>
+                          <div><b>{item.title}</b><time>{item.time}</time></div>
+                          <label>
+                            <input type="checkbox" checked={item.done}
+                              aria-label={`Concluir compromisso ${item.title}`}
+                              onChange={(e) => {
+                                const done = e.target.checked;
+                                setAppointments(current => current.map(record =>
+                                  record.id === item.id ? { ...record, done } : record
+                                ));
+                              }} />
+                            {item.done ? "Concluído" : "Pendente"}
+                          </label>
+                          <button className="more" title="Excluir compromisso"
+                            aria-label={`Excluir compromisso ${item.title}`}
+                            onClick={() => setAppointments(current => current.filter(record => record.id !== item.id))}>
+                            <X size={16} />
+                          </button>
+                        </li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
+              <div className="dashboard-support">
                 <div className="right-column">
                   <section className="ai-card">
                     <div className="ai-card-top">
@@ -769,6 +794,7 @@ function App() {
                   onClick={() => {
                     if (page === "Alunos") {
                       setStep(0);
+                      setBirthDate("");
                       setModal("student");
                     } else if (page === "Agenda") setModal("event");
                     else if (page === "Financeiro") setModal("payment");
@@ -921,7 +947,7 @@ function App() {
                     </div>
                     <div className="student-grid">
                       {tab === "Grupos"
-                        ? ["Vozes em harmonia", "Inglês em boa companhia"].map(
+                        ? demoGroups.map(
                             (g, i) => (
                               <button
                                 className="card student-card"
@@ -1550,13 +1576,54 @@ function App() {
       {modal && (
         <div className="modal-overlay" onClick={() => setModal("")}>
           <section
+            role="dialog" aria-modal="true"
+            aria-labelledby={modal === "birthdays" || modal === "appointment" ? "daily-dialog-title" : undefined}
             className={"modal " + (modal === "ai" ? "ai-modal" : "")}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="close" onClick={() => setModal("")}>
+            <button className="close" aria-label="Fechar" onClick={() => setModal("")}>
               <X size={20} />
             </button>
-            {modal === "ai" ? (
+            {modal === "birthdays" ? (
+              <>
+                <h2 id="daily-dialog-title">Aniversariantes do mês</h2>
+                <p className="birthday-month">{birthdayMonthName} · A lista usa as datas informadas no cadastro.</p>
+                {birthdays.length === 0 ? <p>Nenhum aniversário cadastrado neste mês.</p> : (
+                  <ul className="daily-items">
+                    {birthdays.map((birthday) => (
+                      <li key={birthday.id}><b>{birthday.name}</b><span>{birthday.day}/{birthdayMonth}</span></li>
+                    ))}
+                  </ul>
+                )}
+                <h3>Exemplos de novembro</h3>
+                <ul className="daily-items">
+                  {demoBirthdays.map((birthday) => (
+                    <li key={birthday.name}><b>{birthday.name}</b><span>{birthday.day}/11 · Exemplo fictício</span></li>
+                  ))}
+                </ul>
+              </>
+            ) : modal === "appointment" ? (
+              <>
+                <h2 id="daily-dialog-title">Novo compromisso pessoal</h2>
+                <p>{16 + day} de novembro de 2026</p>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = new FormData(e.currentTarget);
+                  const title = String(form.get("title")).trim();
+                  if (!title) return;
+                  const item = {
+                    id: crypto.randomUUID(), day, title,
+                    time: String(form.get("time")), done: false,
+                  };
+                  setAppointments(current => [...current, item]);
+                  setModal("");
+                }}>
+                  <label>Compromisso<input name="title" required maxLength={100} /></label>
+                  <label>Horário<input type="time" name="time" required /></label>
+                  <button className="primary full">Salvar compromisso</button>
+                </form>
+              </>
+            ) : modal === "ai" ? (
               <>
                 <span className="modal-symbol">
                   <MessageCircle size={27} />
@@ -1608,7 +1675,7 @@ function App() {
                       {ai.toLowerCase().includes("financeiro")
                         ? `Há ${payments.filter((p) => !p.paid).length} pagamentos pendentes, totalizando ${money(payments.filter((p) => !p.paid).reduce((a, p) => a + p.value, 0))}. Você pode confirmá-los no Financeiro.`
                         : ai.toLowerCase().includes("concluir")
-                          ? `${lessons.filter((l) => l.status === "Pendente").length} aulas serão marcadas como realizadas. Deseja confirmar?`
+                          ? `${lessons.filter((l) => (l.day ?? 0) === 0 && l.status === "Pendente").length} aulas serão marcadas como realizadas. Deseja confirmar?`
                           : `Você tem ${lessons.length} aulas na agenda e ${tasks.filter((t) => !t.done).length} tarefas pendentes. Para esta simulação, você pode concluir as aulas de hoje.`}
                     </p>
                     {ai.toLowerCase().includes("concluir") && (
@@ -1616,7 +1683,7 @@ function App() {
                         className="primary"
                         onClick={() => {
                           setLessons(
-                            lessons.map((l) => ({ ...l, status: "Realizada" })),
+                            current => current.map((l) => (l.day ?? 0) === 0 && l.status === "Pendente" ? { ...l, status: "Realizada" } : l),
                           );
                           setModal("");
                           notify("Aulas de hoje concluídas.");
@@ -1680,6 +1747,10 @@ function App() {
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="aluno@email.com"
                         />
+                      </label>
+                      <label>
+                        Data de nascimento (opcional)
+                        <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
                       </label>
                       <label>
                         Curso
@@ -1794,6 +1865,10 @@ function App() {
                   onSubmit={(e) => {
                     e.preventDefault();
                     const f = new FormData(e.currentTarget);
+                    if (String(f.get("end")) <= String(f.get("time"))) {
+                      notify("O horário de término deve ser posterior ao início.");
+                      return;
+                    }
                     setLessons([
                       ...lessons,
                       {
@@ -1801,22 +1876,26 @@ function App() {
                         student: String(f.get("student")),
                         subject: String(f.get("subject")),
                         time: String(f.get("time")),
-                        end: "17:30",
+                        end: String(f.get("end")),
+                        day: eventDay,
                         online: f.get("format") === "Online",
                         status: "Pendente",
                         color: "violet",
                       },
                     ]);
                     setModal("");
-                    notify("Agendamento criado para 16 de novembro.");
+                    notify(`Agendamento criado para ${16 + eventDay} de novembro.`);
                   }}
                 >
                   <label>
-                    Aluno
+                    Aluno ou grupo
                     <select name="student">
-                      {students.map((s) => (
-                        <option key={s.id}>{s.name}</option>
-                      ))}
+                      <optgroup label="Alunos">
+                        {students.map((student) => <option key={student.id}>{student.name}</option>)}
+                      </optgroup>
+                      <optgroup label="Grupos demonstrativos">
+                        {demoGroups.map((group) => <option key={group}>{group}</option>)}
+                      </optgroup>
                     </select>
                   </label>
                   <label>
@@ -1830,7 +1909,7 @@ function App() {
                   <div className="form-row">
                     <label>
                       Data
-                      <input type="date" readOnly value="2026-11-16" />
+                      <input type="date" readOnly value={`2026-11-${16 + eventDay}`} />
                     </label>
                     <label>
                       Horário
@@ -1840,6 +1919,10 @@ function App() {
                         required
                         defaultValue="16:30"
                       />
+                    </label>
+                    <label>
+                      Término
+                      <input name="end" type="time" required defaultValue="17:30" />
                     </label>
                   </div>
                   <label>

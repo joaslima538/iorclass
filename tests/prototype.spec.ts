@@ -156,3 +156,62 @@ test("create lead and activity, and reschedule a lesson", async ({ page }) => {
     page.locator(".day-column").nth(1).getByText("Mariana Costa"),
   ).toBeVisible();
 });
+
+test("daily dashboard uses saved lessons, birthdays and personal appointments", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto("http://127.0.0.1:5173/#professor");
+  const lessons = page.locator(".daily-grid .today");
+  const appointments = page.getByRole("region", { name: "Compromissos do dia" });
+  const progress = page.getByRole("region", { name: "Progresso das aulas" });
+  expect((await appointments.boundingBox())!.x).toBeGreaterThan((await lessons.boundingBox())!.x);
+  await expect(progress.locator("strong")).toHaveText(["2", "2"]);
+  await lessons.getByTitle("Marcar como realizada").first().click();
+  await expect(progress.locator("strong")).toHaveText(["1", "3"]);
+
+  await page.getByRole("button", { name: "Aniversariantes do mês" }).click();
+  const birthdays = page.getByRole("dialog", { name: "Aniversariantes do mês" });
+  await expect(birthdays.getByText("Nenhum aniversário cadastrado neste mês.")).toBeVisible();
+  await expect(birthdays.getByText(/Exemplo fictício/)).toHaveCount(2);
+  await page.keyboard.press("Escape");
+
+  await appointments.getByRole("button", { name: "Adicionar" }).click();
+  await page.getByLabel("Compromisso", { exact: true }).fill("Consulta pessoal");
+  await page.getByLabel("Horário", { exact: true }).fill("08:30");
+  await page.getByRole("button", { name: "Salvar compromisso" }).click();
+  await page.getByRole("checkbox", { name: "Concluir compromisso Consulta pessoal" }).check();
+  await page.getByRole("button", { name: "Ter, 17" }).click();
+  await expect(lessons.getByText("Nenhuma aula neste dia.")).toBeVisible();
+  await expect(appointments.getByText("Consulta pessoal")).toHaveCount(0);
+  await page.getByRole("button", { name: "Novo agendamento" }).click();
+  await page.getByLabel("Aluno ou grupo").selectOption("Vozes em harmonia");
+  await page.getByLabel("Título da aula").fill("Ensaio em grupo");
+  await page.getByRole("button", { name: "Criar agendamento" }).click();
+  await expect(lessons.getByText("Vozes em harmonia")).toBeVisible();
+  await expect(lessons.getByText("Pendente")).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("checkbox", { name: "Concluir compromisso Consulta pessoal" })).toBeChecked();
+  await expect(progress.locator("strong")).toHaveText(["2", "3"]);
+  await expect(lessons.getByText("Vozes em harmonia")).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const lessonBounds = (await lessons.boundingBox())!;
+  expect((await appointments.boundingBox())!.y).toBeGreaterThanOrEqual(lessonBounds.y + lessonBounds.height);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await appointments.getByRole("button", { name: "Excluir compromisso Consulta pessoal" }).click();
+  await page.reload();
+  await expect(appointments.getByText("Consulta pessoal")).toHaveCount(0);
+
+  await page.locator(".mobile-nav").getByRole("button", { name: "Alunos" }).click();
+  await page.getByRole("button", { name: "Novo aluno" }).click();
+  await page.getByLabel("Nome completo").fill("Aluno Aniversariante");
+  await page.getByLabel("E-mail", { exact: true }).fill("aniversario@example.com");
+  const month = await page.evaluate(() => String(new Date().getMonth() + 1).padStart(2, "0"));
+  await page.getByLabel("Data de nascimento (opcional)").fill(`2002-${month}-15`);
+  for (let step = 0; step < 4; step++) {
+    await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Cadastrar aluno", exact: true }).click();
+  await page.reload();
+  await page.getByRole("button", { name: "Aniversariantes do mês" }).click();
+  await expect(birthdays.getByText("Aluno Aniversariante")).toBeVisible();
+});
