@@ -4515,28 +4515,71 @@ main { margin-left:240px; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(8px, 2vw, 22px);
+  gap: clamp(4px, 1vw, 12px);
 }
-.trophy-counts > svg {
-  color: #9c6505;
-  fill: #ffdf85;
-  flex-shrink: 0;
-}
-.trophy-counts > div {
+.trophy-total {
   display: grid;
-  padding: 8px;
-  min-width: 78px;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  width: clamp(78px, 8vw, 96px);
+  aspect-ratio: 1;
+  padding: 7px;
+  border-radius: 50%;
+  background: #515b69;
+  color: white;
+  font-size: 13px;
+  line-height: 1.05;
+}
+.trophy-total:last-child {
+  background: #25672d;
+}
+.trophy-total strong {
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1;
+}
+.trophy-art {
+  position: relative;
+  flex: 0 0 clamp(94px, 12vw, 148px);
+  aspect-ratio: 1 / 1.12;
+  --gold: linear-gradient(100deg, #cc861e, #ffe293 33%, #ffcb59 60%, #d99025);
+}
+.trophy-art span {
+  position: absolute;
+}
+.trophy-handles {
+  inset: 9% 4% 58%;
+  border: clamp(5px, .6vw, 8px) solid #df9b2b;
+  border-radius: 18% 18% 44% 44%;
+}
+.trophy-cup {
+  inset: 4% 17% 38%;
+  background: var(--gold);
+  border: 2px solid #d59836;
+  border-radius: 12% 12% 48% 48% / 7% 7% 85% 85%;
+  box-shadow: inset 0 4px #ffebad;
+}
+.trophy-stem {
+  inset: 57% 26% 20%;
+  background: var(--gold);
+  clip-path: polygon(39% 0, 61% 0, 64% 49%, 74% 68%, 90% 82%, 92% 100%, 8% 100%, 10% 82%, 26% 68%, 36% 49%);
+}
+.trophy-base {
+  inset: 79% 18% 1%;
+  background: #292d34;
+  clip-path: polygon(17% 0, 83% 0, 91% 72%, 100% 100%, 0 100%, 9% 72%);
+}
+.trophy-base::after {
+  content: "";
+  position: absolute;
+  inset: 18% 26% 28%;
+  border-radius: 2px;
+  background: #d4bc78;
+}
+.trophy-cancelled {
+  margin: 8px 0 0;
+  color: #566478;
   font-size: 14px;
-  border-radius: 8px;
-  background: #edf0f5;
-  color: #263450;
-}
-.trophy-counts > div:last-child {
-  background: #e9edff;
-  color: #253aab;
-}
-.trophy-counts strong {
-  font-size: 27px;
 }
 .dashboard-dates.date-tabs {
   max-width: 450px;

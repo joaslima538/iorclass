@@ -178,8 +178,12 @@ test('header summary uses demo records, hides persistently and has no sidebar gu
  await page.getByRole('button',{name:'Ocultar valores do cabeçalho'}).click();
  await expect(header.locator('.summary-profit-value')).toHaveText('••••');
  await expect(header.locator('.summary-lessons strong')).toHaveText(['••','••','••']);
+ const progress = page.getByRole('region', { name: 'Progresso das aulas' });
+ await expect(progress.locator('strong')).toHaveText(['2', '2']);
+ await expect(progress.getByText('Aulas canceladas: 0')).toBeVisible();
  await page.reload();
  await expect(header.locator('.summary-profit-value')).toHaveText('••••');
+ await expect(progress.locator('strong')).toHaveText(['2', '2']);
  await page.getByRole('button',{name:'Mostrar valores do cabeçalho'}).click();
  await page.getByTitle('Marcar como realizada').first().click();
  await expect(header.locator('.summary-lessons strong')).toHaveText(['1','0','3']);

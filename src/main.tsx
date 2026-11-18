@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Cake,
-  Trophy,
   Eye,
   EyeOff,
   Undo2,
@@ -216,6 +215,7 @@ function App() {
   const dayLessons = lessons.filter((lesson) => (lesson.day ?? 0) === day)
     .sort((a, b) => a.time.localeCompare(b.time));
   const pendingLessons = lessons.filter((lesson) => lesson.status === "Pendente").length;
+  const cancelledLessons = lessons.filter((lesson) => lesson.status === "Cancelada").length;
   const completedLessons = lessons.filter((lesson) => lesson.status === "Realizada").length;
   const now = new Date();
   const birthdayMonth = String(now.getMonth() + 1).padStart(2, "0");
@@ -520,7 +520,7 @@ function App() {
             </article>
             <article className="stat summary-lessons">
               <div><CalendarDays size={17} /><span>Aulas pendentes</span><strong>{summaryCount(pendingLessons)}</strong></div>
-              <div className="summary-cancelled"><X size={17} /><span>Aulas canceladas</span><strong>{summaryCount(lessons.filter((lesson) => lesson.status === "Cancelada").length)}</strong></div>
+              <div className="summary-cancelled"><X size={17} /><span>Aulas canceladas</span><strong>{summaryCount(cancelledLessons)}</strong></div>
               <div className="summary-positive"><CheckCheck size={17} /><span>Aulas realizadas</span><strong>{summaryCount(completedLessons)}</strong></div>
             </article>
           </section>
@@ -546,10 +546,16 @@ function App() {
               <section className="lesson-progress" aria-labelledby="lesson-progress-title">
                 <h2 id="lesson-progress-title">Progresso das aulas</h2>
                 <div className="trophy-counts" aria-live="polite">
-                  <div><strong>{summaryCount(pendingLessons)}</strong><span>Pendentes</span></div>
-                  <Trophy size={76} strokeWidth={1.5} aria-hidden="true" />
-                  <div><strong>{summaryCount(completedLessons)}</strong><span>Realizadas</span></div>
+                  <div className="trophy-total"><strong>{pendingLessons}</strong><span>Aulas pendentes</span></div>
+                  <div className="trophy-art" aria-hidden="true">
+                    <span className="trophy-handles" />
+                    <span className="trophy-cup" />
+                    <span className="trophy-stem" />
+                    <span className="trophy-base" />
+                  </div>
+                  <div className="trophy-total"><strong>{completedLessons}</strong><span>Aulas realizadas</span></div>
                 </div>
+                <p className="trophy-cancelled">Aulas canceladas: {cancelledLessons}</p>
               </section>
               <div className="date-tabs dashboard-dates" role="group" aria-label="Dia da agenda demonstrativa">
                 {demoDates.map((date, i) => (
