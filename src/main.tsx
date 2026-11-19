@@ -1,3 +1,4 @@
+import { HelpChat } from "./help-chat";
 import { Bulletins, exportCsv, Files, GroupForm, lessonDate, lessonDay, matches, Partners, PartnerWorkReport, PersonalFinance, reportKinds, Reports, SettingsPanel, Support, Tasks } from "./management";
 import { assignmentsKey, assignmentStatus, defaultProfile, profileKey, formatMoney as money, groupsKey, initialGroups, partnersKey, logTask, useLocal } from "./local";
 import type { Assignment, Partner, Task } from "./local";
@@ -7,6 +8,8 @@ import { createRoot } from "react-dom/client";
 import {
   Cake,
   Gift,
+  Columns3,
+  List,
   Eye,
   EyeOff,
   Undo2,
@@ -193,6 +196,15 @@ function Avatar({ name, size = 36 }: { name: string; size?: number }) {
 }
 function App() {
   const [page, setPage] = useState("Início");
+  const [studentLayout, setStudentLayout] = useLocal<"Lista" | "Kanban">("ior-student-layout", "Lista");
+  const [leadLayout, setLeadLayout] = useLocal<"Lista" | "Kanban">("ior-lead-layout", "Kanban");
+  const [helpOpen, setHelpOpen] = useState(false);
+  const helpTrigger = React.useRef<HTMLButtonElement>(null);
+
+  function closeHelp() {
+    setHelpOpen(false);
+    helpTrigger.current?.focus();
+  }
   const [reportKind, setReportKind] = useState(reportKinds[0]);
   const [partners, setPartners] = useLocal<Partner[]>(partnersKey, []);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
@@ -324,6 +336,7 @@ function App() {
         setModal("ai");
       }
       if (e.key === "Escape") {
+        if (document.getElementById("help-chat")?.contains(document.activeElement)) closeHelp();
         setModal("");
         setNotices(false);
       }
@@ -340,6 +353,33 @@ function App() {
     if (!keepMenu) setMobile(false);
     const section = submenus.find((menu) => menu.children.some((child) => child.page === p));
     if (section) setExpandedMenus((current) => current.includes(section.label) ? current : [...current, section.label]);
+  }
+  const visibleStudents = students.filter((student) => matches(`${student.name} ${student.email} ${student.course}`, query));
+  const studentCourses = [...new Set(visibleStudents.map((student) => student.course))];
+  const leadRows = [
+    ...demoLeads.map((name, index) => ({ id: "lead-" + index, name, subtitle: "Canto · Iniciante", email: "", stage: demoLeadStage(index) })),
+    ...extraLeads.map((lead) => ({ id: "extra-lead-" + lead.email, name: lead.name, subtitle: lead.email, email: lead.email, stage: newLeadStage(lead.email) })),
+  ];
+  function convertLead(name: string, email: string) {
+    setName(name);
+    setEmail(email);
+    setBirthDate("");
+    setStep(0);
+    setModal("student");
+  }
+  function studentRow(student: Student) {
+    return (
+      <button className="card student-directory-item" key={student.id} onClick={() => {
+        setSelected(student);
+        setDetailTab("Visão geral");
+      }}>
+        <Avatar name={student.name} size={42} />
+        <div><h3>{student.name}</h3><p>{student.email}</p></div>
+        {studentLayout === "Lista" && <span className="directory-course">{student.course}</span>}
+        <span className={`status ${student.paid ? "green" : "amber"}`}>{student.paid ? "Em dia" : "Pagamento pendente"}</span>
+        <ChevronRight size={16} aria-hidden="true" />
+      </button>
+    );
   }
   function notify(t: string) {
     setToast(t);
@@ -1023,6 +1063,7 @@ function App() {
                           </button>
                         ))}
                       </div>
+                      {tab !== "Grupos" && <ViewSwitch value={studentLayout} onChange={setStudentLayout} label="Visualização de alunos" />}
                       <div className="search-field">
                         <Search size={17} />
                         <input
@@ -1032,47 +1073,32 @@ function App() {
                         />
                       </div>
                     </div>
-                    <div className="student-grid">
-                      {tab === "Grupos"
-                        ? groups.filter((group) => matches(group.name, query)).map((group) => (
-                            <article className="card student-card" key={group.id}>
-                              <span className="group-avatar"><Users size={30} /></span>
-                              <h3>{group.name}</h3>
-                              <p>{group.members.length} alunos</p>
-                              <p>{students.filter((student) => group.members.includes(student.id)).map((student) => student.name).join(", ")}</p>
-                            </article>
-                          ))
-                        : students
-                            .filter((s) => matches(`${s.name} ${s.email} ${s.course}`, query))
-                            .map((s) => (
-                              <button
-                                className="card student-card"
-                                key={s.id}
-                                onClick={() => {
-                                  setSelected(s);
-                                  setDetailTab("Visão geral");
-                                }}
-                              >
-                                <div className="student-card-top">
-                                  <span className="status green">Ativo</span>
-                                  <MoreHorizontal size={18} />
-                                </div>
-                                <Avatar name={s.name} size={58} />
-                                <h3>{s.name}</h3>
-                                <p>{s.course}</p>
-                                <div className="student-card-bottom">
-                                  <span
-                                    className={
-                                      "status " + (s.paid ? "green" : "amber")
-                                    }
-                                  >
-                                    {s.paid ? "Em dia" : "Pagamento pendente"}
-                                  </span>
-                                  <ArrowUpRight size={16} />
-                                </div>
-                              </button>
-                            ))}
-                    </div>
+                    {tab === "Grupos" ? (
+                      <div className="student-grid">
+                        {groups.filter((group) => matches(group.name, query)).map((group) => (
+                          <article className="card student-card" key={group.id}>
+                            <span className="group-avatar"><Users size={30} /></span>
+                            <h3>{group.name}</h3>
+                            <p>{group.members.length} alunos</p>
+                            <p>{students.filter((student) => group.members.includes(student.id)).map((student) => student.name).join(", ")}</p>
+                          </article>
+                        ))}
+                      </div>
+                    ) : !visibleStudents.length ? (
+                      <p className="management-empty">Nenhum aluno encontrado.</p>
+                    ) : studentLayout === "Lista" ? (
+                      <div className="student-directory-list">{visibleStudents.map(studentRow)}</div>
+                    ) : (
+                      <div className="student-directory-board" aria-label="Kanban de alunos por curso">
+                        {studentCourses.map((course) => {
+                          const courseStudents = visibleStudents.filter((student) => student.course === course);
+                          return <section className="task-lane" key={course} aria-label={course}>
+                            <div className="task-lane-heading"><h2>{course} <span>{courseStudents.length}</span></h2></div>
+                            {courseStudents.map(studentRow)}
+                          </section>;
+                        })}
+                      </div>
+                    )}
                   </>
                 ))}
               {page === "Agenda" && (
@@ -1333,6 +1359,24 @@ function App() {
                   </div>
                   {leadCounts[0] > 0 && <p>{leadCounts[0]} contato(s) na etapa inicial. Combine o próximo passo com esses interessados.</p>}
                 </section>
+                <div className="toolbar lead-view-toolbar">
+                  <ViewSwitch value={leadLayout} onChange={setLeadLayout} label="Visualização de leads" />
+                </div>
+                {leadLayout === "Lista" ? (
+                  <section className="card management-table lead-list">
+                    <table>
+                      <thead><tr><th scope="col">Contato</th><th scope="col">Etapa do funil</th><th scope="col">Ações</th></tr></thead>
+                      <tbody>{leadRows.map((lead) => <tr key={lead.id}>
+                        <td><div className="table-person"><Avatar name={lead.name} /><div><b>{lead.name}</b><small>{lead.subtitle}</small></div></div></td>
+                        <td><select aria-label={`Etapa de ${lead.name}`} value={lead.stage} onChange={(event) => {
+                          const stage = Number(event.target.value);
+                          setLeadStages((current) => ({ ...current, [lead.id]: stage }));
+                        }}>{leadStageNames.map((stage, index) => <option key={stage} value={index}>{stage}</option>)}</select></td>
+                        <td><button className="text-button" onClick={() => convertLead(lead.name, lead.email)}>Converter em aluno <ArrowRight size={13} /></button></td>
+                      </tr>)}</tbody>
+                    </table>
+                  </section>
+                ) : (
                 <div className="kanban">
                   {leadStageNames.map((stage, i) => (
                     <div
@@ -1341,7 +1385,8 @@ function App() {
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         const id = e.dataTransfer.getData("lead");
-                        setLeadStages({ ...leadStages, [id]: i });
+                        if (!leadRows.some((lead) => lead.id === id)) return;
+                        setLeadStages((current) => ({ ...current, [id]: i }));
                         notify("Lead movido para " + stage);
                       }}
                     >
@@ -1398,11 +1443,7 @@ function App() {
                               <button
                                 className="text-button"
                                 onClick={() => {
-                                  setName(leadName);
-                                  setEmail("");
-                                  setBirthDate("");
-                                  setModal("student");
-                                  setStep(0);
+                                  convertLead(leadName, "");
                                 }}
                               >
                                 Converter em aluno <ArrowRight size={13} />
@@ -1414,6 +1455,7 @@ function App() {
                     </div>
                   ))}
                 </div>
+                )}
                 </>
               )}
               {page === "Atividades" && (
@@ -1530,11 +1572,18 @@ function App() {
       </main>
       <button
         className="floating-ai"
-        onClick={() => setModal("ai")}
-        title="Abrir assistente iorIA"
+        ref={helpTrigger}
+        aria-expanded={helpOpen}
+        aria-controls="help-chat"
+        onClick={() => helpOpen ? closeHelp() : setHelpOpen(true)}
+        title="Abrir chat de ajuda iorIA"
       >
         <MessageCircle size={20} /><span>Ajuda</span>
       </button>
+      <HelpChat open={helpOpen} onClose={closeHelp} onSupport={() => {
+        setHelpOpen(false);
+        navigate("Central de ajuda");
+      }} />
       <nav className="mobile-nav">
         {[
           ["Início", House],
@@ -2275,6 +2324,17 @@ function App() {
     </div>
   );
 }
+function ViewSwitch({ value, onChange, label }: {
+  value: "Lista" | "Kanban";
+  onChange: (value: "Lista" | "Kanban") => void;
+  label: string;
+}) {
+  return <div className="view-switch" role="group" aria-label={label}>
+    <button type="button" aria-pressed={value === "Lista"} onClick={() => onChange("Lista")}><List size={16} /> Lista</button>
+    <button type="button" aria-pressed={value === "Kanban"} onClick={() => onChange("Kanban")}><Columns3 size={16} /> Kanban</button>
+  </div>;
+}
+
 function Stat({
   label,
   value,

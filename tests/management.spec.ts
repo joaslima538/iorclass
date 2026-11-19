@@ -43,8 +43,10 @@ test("local library, personal ledger, filtered reports and partner restore", asy
   await page.goto(url + "#professor");
   const open = (name: string) => page.locator(".sidebar").getByRole("button", { name, exact: true }).click();
   await open("Arquivos");
+  await page.getByRole("button", { name: "Nova pasta" }).click();
   await page.getByLabel("Nome da pasta").fill("Partituras");
   await page.getByRole("button", { name: "Criar pasta" }).click();
+  await page.getByRole("button", { name: "Adicionar arquivo" }).click();
   await page.getByLabel("Arquivo", { exact: true }).setInputFiles({ name: "partitura.txt", mimeType: "text/plain", buffer: Buffer.from("Música") });
   await page.getByLabel("Pasta de destino").selectOption({ label: "Partituras" });
   await page.getByRole("button", { name: "Salvar arquivo" }).click();
@@ -74,7 +76,10 @@ test("local library, personal ledger, filtered reports and partner restore", asy
   await open("Parceiros");
   await page.getByLabel("Nome do parceiro").fill("Parceiro Demo");
   await page.getByLabel("E-mail do parceiro").fill("demo@example.com");
-  await page.getByRole("checkbox", { name: "Agenda · editar" }).check();
+  const editAgenda = page.getByRole("checkbox", { name: "Agenda · editar" });
+  await expect(editAgenda).toBeDisabled();
+  await page.getByRole("checkbox", { name: "Ver tela de Agenda" }).check();
+  await editAgenda.check();
   await page.getByRole("button", { name: "Salvar parceiro" }).click();
   await page.getByRole("button", { name: "Arquivar parceiro" }).click();
   await page.getByRole("checkbox", { name: "Parceiros arquivados" }).check();
@@ -82,6 +87,17 @@ test("local library, personal ledger, filtered reports and partner restore", asy
   await page.getByRole("button", { name: "Restaurar parceiro" }).click();
   await page.getByRole("checkbox", { name: "Parceiros arquivados" }).uncheck();
   await expect(page.getByRole("row", { name: /Parceiro Demo/ })).toBeVisible();
+  await page.reload();
+  await open("Parceiros");
+  await page.getByRole("button", { name: "Editar parceiro" }).click();
+  const viewAgenda = page.getByRole("checkbox", { name: "Ver tela de Agenda" });
+  await expect(viewAgenda).toBeChecked();
+  await expect(editAgenda).toBeChecked();
+  await viewAgenda.uncheck();
+  await expect(editAgenda).toBeDisabled();
+  await expect(editAgenda).not.toBeChecked();
+  await page.getByRole("button", { name: "Salvar parceiro" }).click();
+  await expect(page.getByRole("row", { name: /Parceiro Demo/ })).toContainText("Nenhuma");
 });
 
 test("task checklist, attachment and history persist on mobile", async ({ page }) => {
@@ -92,9 +108,18 @@ test("task checklist, attachment and history persist on mobile", async ({ page }
     await page.locator(".sidebar").getByRole("button", { name: "Tarefas", exact: true }).click();
   };
   await openTasks();
-  await page.getByLabel("Nova tarefa").fill("Preparar concerto");
+  await page.getByRole("button", { name: "Adicionar tarefa em Em andamento" }).click();
+  await page.getByLabel("Título da nova tarefa").fill("Preparar concerto");
+  await expect(page.getByLabel("Etapa inicial")).toHaveValue("1");
+  await page.getByLabel("Prazo (opcional)").fill("2026-11-21");
+  await page.getByText("Adicionar descrição ou checklist").click();
+  await page.getByLabel("Descrição da tarefa").fill("Organizar o recital.");
+  await page.getByLabel("Itens do checklist").fill("Separar partituras");
   await page.getByRole("button", { name: "Criar tarefa" }).click();
-  await page.getByRole("button", { name: "Preparar concerto" }).click();
+  const lane = page.getByRole("region", { name: "Em andamento" });
+  await expect(lane.getByText("Organizar o recital.")).toBeVisible();
+  await lane.getByRole("button", { name: "Preparar concerto" }).click();
+  await expect(page.getByRole("checkbox", { name: "Separar partituras" })).toBeVisible();
   await page.getByLabel("Novo item").fill("Reservar sala");
   await page.getByRole("button", { name: "Adicionar ao checklist" }).click();
   await page.getByRole("checkbox", { name: "Reservar sala" }).check();
@@ -107,6 +132,8 @@ test("task checklist, attachment and history persist on mobile", async ({ page }
   await expect(page.getByRole("checkbox", { name: "Reservar sala" })).toBeChecked();
   await expect(page.getByText("Tarefa criada")).toBeVisible();
   await expect(page.getByRole("button", { name: "plano.txt" })).toBeVisible();
+  await page.getByLabel("Etapa de Preparar concerto").selectOption("2");
+  await expect(page.getByRole("region", { name: "Concluídas" }).getByRole("button", { name: "Preparar concerto" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
@@ -212,4 +239,48 @@ test("partner messages and work report use saved partners and assigned lessons",
   await expect(page.getByText("1 h 0 min")).toBeVisible();
   await page.getByLabel("De", { exact: true }).fill("2026-11-17");
   await expect(page.getByRole("row", { name: /Aula com parceiro/ })).toHaveCount(0);
+});
+
+test("help opens a local conversation with follow-ups and keeps it on reopen", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(url + "#professor");
+  const trigger = page.getByRole("button", { name: "Ajuda", exact: true });
+  await trigger.click();
+  const chat = page.getByRole("dialog", { name: "Ajuda iorIA" });
+  await expect(chat.getByText("Simulação · sem consumo de créditos")).toBeVisible();
+  await chat.getByRole("button", { name: "Como cadastro um aluno?" }).click();
+  await expect(chat.getByRole("log")).toContainText("Listar Alunos");
+  const message = chat.getByRole("textbox", { name: "Sua mensagem" });
+  await message.fill("E depois?");
+  await message.press("Enter");
+  await expect(chat.getByRole("log")).toContainText("Use Lista");
+  await message.fill("Como configuro as permissões de um parceiro?");
+  await chat.getByRole("button", { name: "Enviar mensagem" }).click();
+  await expect(chat.getByRole("log")).toContainText("Ver tela");
+  await page.keyboard.press("Escape");
+  await expect(chat).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await expect(chat.getByRole("log")).toContainText("Ver tela");
+});
+
+test("student and lead view switches persist and leads can move from the list", async ({ page }) => {
+  await page.goto(url + "#professor");
+  const nav = page.locator(".sidebar");
+  const menu = nav.getByRole("group", { name: "Submenu de Alunos" });
+  await nav.getByRole("button", { name: "Alunos", exact: true }).click();
+  const studentView = page.getByRole("group", { name: "Visualização de alunos" });
+  await expect(studentView.getByRole("button", { name: "Lista", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await studentView.getByRole("button", { name: "Kanban" }).click();
+  const singing = page.getByRole("region", { name: "Canto e técnica vocal" });
+  await expect(singing.getByRole("heading", { name: "Mariana Costa" })).toBeVisible();
+  await page.reload();
+  await nav.getByRole("button", { name: "Alunos", exact: true }).click();
+  await expect(studentView.getByRole("button", { name: "Kanban" })).toHaveAttribute("aria-pressed", "true");
+  await menu.getByRole("button", { name: "Gerenciar Leads" }).click();
+  const leadView = page.getByRole("group", { name: "Visualização de leads" });
+  await leadView.getByRole("button", { name: "Lista", exact: true }).click();
+  await page.getByLabel("Etapa de Fernanda Souza").selectOption({ label: "Negociação" });
+  await leadView.getByRole("button", { name: "Kanban" }).click();
+  await expect(page.locator(".kanban-column").filter({ has: page.getByRole("heading", { name: "Negociação", exact: false }) })).toContainText("Fernanda Souza");
 });

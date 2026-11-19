@@ -65,7 +65,7 @@ test("teacher workflow and persistence", async ({ page }) => {
     .locator(".sidebar")
     .getByRole("button", { name: "Início", exact: true })
     .click();
-  await page.getByTitle("Abrir assistente iorIA").click();
+  await page.getByRole("button", { name: "Abrir assistente", exact: true }).click();
   await page
     .getByRole("button", { name: "Concluir as aulas de hoje", exact: true })
     .click();

@@ -27,6 +27,9 @@ export const bulletinsKey = "ior-bulletins";
 export type Task = {
   text: string;
   done: boolean;
+  inProgress?: boolean;
+  description?: string;
+  dueDate?: string;
   attachments?: { id: string; name: string }[];
   checklist?: { text: string; done: boolean }[];
   history?: { action: string; date: string }[];
