@@ -1,8 +1,12 @@
+import { Bulletins, exportCsv, Files, GroupForm, lessonDate, lessonDay, matches, Partners, PartnerWorkReport, PersonalFinance, reportKinds, Reports, SettingsPanel, Support, Tasks } from "./management";
+import { assignmentsKey, assignmentStatus, defaultProfile, profileKey, formatMoney as money, groupsKey, initialGroups, partnersKey, logTask, useLocal } from "./local";
+import type { Assignment, Partner, Task } from "./local";
 import { PublicExperience, StudentExperience } from "./experience";
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Cake,
+  Gift,
   Eye,
   EyeOff,
   Undo2,
@@ -35,7 +39,6 @@ import {
   CheckCheck,
   GraduationCap,
   LogOut,
-  LayoutGrid,
   Download,
   Copy,
   Mail,
@@ -82,7 +85,14 @@ type Student = (typeof initialStudents)[number] & { birthDate?: string };
 type Appointment = { id: string; day: number; title: string; time: string; done: boolean };
 
 const demoDates = ["Seg, 16", "Ter, 17", "Qua, 18", "Qui, 19", "Sex, 20"];
-const demoGroups = ["Vozes em harmonia", "Inglês em boa companhia"];
+const demoLeads = [
+  "Fernanda Souza", "André Moreira", "Thiago Costa", "Camila Mendes",
+  "Bruno Melo", "Isabela Dias", "Luiza Rocha", "Daniel Alves",
+];
+const leadStageNames = [
+  "Contato Inicial", "Negociação", "Aula Experimental", "Aguardando Agenda",
+  "Aguardando Contrato", "Fechado", "Perdido",
+];
 const demoBirthdays = [
   { name: "Mariana Costa", day: 19 },
   { name: "Lucas Ferreira", day: 26 },
@@ -97,6 +107,7 @@ type Lesson = {
   status: string;
   color: string;
   day?: number;
+  partnerId?: string;
 };
 const seedLessons: Lesson[] = [
   {
@@ -140,19 +151,6 @@ const seedLessons: Lesson[] = [
     color: "blue",
   },
 ];
-function useLocal<T>(key: string, initial: T) {
-  const [v, set] = useState<T>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(key) || "null") ?? initial;
-    } catch {
-      return initial;
-    }
-  });
-  useEffect(() => localStorage.setItem(key, JSON.stringify(v)), [v, key]);
-  return [v, set] as const;
-}
-const money = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 function Owl({ small = false }: { small?: boolean }) {
   return (
     <svg
@@ -195,21 +193,44 @@ function Avatar({ name, size = 36 }: { name: string; size?: number }) {
 }
 function App() {
   const [page, setPage] = useState("Início");
+  const [reportKind, setReportKind] = useState(reportKinds[0]);
+  const [partners, setPartners] = useLocal<Partner[]>(partnersKey, []);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+
+  const [groups, setGroups] = useLocal(groupsKey, initialGroups);
+  const [profile, setProfile] = useLocal(profileKey, {
+    ...defaultProfile,
+    studio: localStorage.getItem("studio") || defaultProfile.studio,
+  });
+  const [guideStep, setGuideStep] = useLocal("ior-guide-step", 0);
+  const guide = [
+    { label: "Cadastre seus alunos", page: "Alunos", modal: "student", description: "Comece com um aluno individual. Você também pode reunir alunos em um grupo." },
+    { label: "Organize a agenda", page: "Agenda", modal: "event", description: "Agende uma aula para um aluno ou grupo e confira o horário no calendário." },
+    { label: "Acompanhe seus pagamentos", page: "Financeiro", modal: "", description: "Confira as mensalidades e confirme um lançamento quando receber." },
+  ];
+
   const [extraLeads, setExtraLeads] = useLocal(
     "ior-extra-leads",
     [] as { name: string; email: string }[],
   );
-  const [extraActivities, setExtraActivities] = useLocal(
-    "ior-extra-activities",
-    [] as { title: string; description: string }[],
-  );
+  const [extraActivities, setExtraActivities] = useLocal<Assignment[]>(assignmentsKey, []);
   const [leadStages, setLeadStages] = useLocal(
     "ior-lead-stages",
     {} as Record<string, number>,
   );
+  const demoLeadStage = (index: number) => leadStages["lead-" + index] ?? Math.max(0, index - 1);
+  const newLeadStage = (email: string) => leadStages["extra-lead-" + email] ?? 0;
+  const leadCounts = leadStageNames.map((_, stage) =>
+    demoLeads.filter((_, index) => demoLeadStage(index) === stage).length +
+    extraLeads.filter((item) => newLeadStage(item.email) === stage).length
+  );
   const [students, setStudents] = useLocal<Student[]>("ior-students", initialStudents);
   const [lessons, setLessons] = useLocal("ior-lessons", seedLessons);
   const [day, setDay] = useState(0);
+  const [eventDate, setEventDate] = useState("");
+  const [activeLessonId, setActiveLessonId] = useState<number | null>(null);
+  const activeLesson = lessons.find((item) => item.id === activeLessonId);
+  const activeLessonNoteKey = activeLesson ? `ior-lesson-note-${activeLesson.id}` : "";
   const eventDay = page === "Início" ? day : 0;
   const [appointments, setAppointments] = useLocal<Appointment[]>("ior-personal-appointments", []);
   const dayLessons = lessons.filter((lesson) => (lesson.day ?? 0) === day)
@@ -226,7 +247,7 @@ function App() {
       ? [{ id: student.id, name: student.name, day: Number(date.slice(8, 10)) }]
       : [];
   }).sort((a, b) => a.day - b.day);
-  const [tasks, setTasks] = useLocal("ior-tasks", [
+  const [tasks, setTasks] = useLocal<Task[]>("ior-tasks", [
     { text: "Preparar atividade de técnica vocal", done: false },
     { text: "Enviar material para a Mariana", done: false },
     { text: "Revisar planejamento da semana", done: true },
@@ -265,6 +286,23 @@ function App() {
   const [value, setValue] = useState("320");
   const [view, setView] = useState("Semana");
   const [week, setWeek] = useState(0);
+  const weekStart = new Date(lessonDate(week * 7) + "T12:00:00");
+  const weekEnd = new Date(lessonDate(week * 7 + 4) + "T12:00:00");
+  const calendarFormat = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", year: "numeric" });
+  const monthStart = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1, 12);
+  const monthLength = new Date(weekStart.getFullYear(), weekStart.getMonth() + 1, 0).getDate();
+  function moveCalendar(direction: number) {
+    if (view === "Semana") {
+      setWeek(week + direction);
+      return;
+    }
+    const target = new Date(Date.UTC(weekStart.getFullYear(), weekStart.getMonth() + direction, 8));
+    setWeek(Math.floor(lessonDay(target.toISOString().slice(0, 10)) / 7));
+  }
+  function openEvent(date: string) {
+    setEventDate(date);
+    setModal("event");
+  }
   const [mobile, setMobile] = useState(false);
   const [notices, setNotices] = useState(false);
   const [activityStatus, setActivityStatus] = useLocal("ior-activities", [
@@ -293,12 +331,15 @@ function App() {
     window.addEventListener("keydown", f);
     return () => window.removeEventListener("keydown", f);
   }, []);
-  function navigate(p: string) {
+  function navigate(p: string, { keepMenu = false, report = reportKinds[0] } = {}) {
     setPage(p);
     setQuery("");
     setTab("Todos");
     setSelected(null);
-    setMobile(false);
+    if (p === "Relatórios") setReportKind(report);
+    if (!keepMenu) setMobile(false);
+    const section = submenus.find((menu) => menu.children.some((child) => child.page === p));
+    if (section) setExpandedMenus((current) => current.includes(section.label) ? current : [...current, section.label]);
   }
   function notify(t: string) {
     setToast(t);
@@ -344,43 +385,100 @@ function App() {
     setBirthDate("");
     notify("Aluno cadastrado com aula e cobrança de demonstração.");
   }
+  function paymentStatus(payment: (typeof payments)[number]) {
+    if (payment.paid) return "Em dia";
+    const dueDay = Number.parseInt(payment.due, 10);
+    const days = dueDay - 16;
+    if (days < 0) return "Vencido";
+    if (days === 0) return "Vence hoje";
+    return `Vence em ${days} ${days === 1 ? "dia" : "dias"}`;
+  }
+  const visiblePayments = payments.filter((payment) => tab === "Todos" || (tab === "Pagos" ? payment.paid : !payment.paid));
   function exportData() {
-    const blob = new Blob(
-      [
-        "Aluno,Valor,Status\n" +
-          payments
-            .map((p) => `${p.name},${p.value},${p.paid ? "Pago" : "Pendente"}`)
-            .join("\n"),
-      ],
-      { type: "text/csv;charset=utf-8;" },
-    );
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "iorclass-financeiro.csv";
-    a.click();
-    URL.revokeObjectURL(a.href);
+    exportCsv("iorclass-financeiro.csv", ["Aluno", "Valor", "Status", "Situação do prazo"],
+      visiblePayments.map((payment) => [payment.name, String(payment.value), payment.paid ? "Pago" : "Pendente", paymentStatus(payment)]));
     notify("Relatório exportado.");
   }
-  const nav = [
-    {
-      title: "PRINCIPAL",
-      items: [
-        ["Início", House],
-        ["Agenda", CalendarDays],
-        ["Alunos", Users],
-        ["Financeiro", Wallet],
-      ],
-    },
-    {
-      title: "ENSINO & GESTÃO",
-      items: [
-        ["Atividades", BookOpen],
-        ["Arquivos", FolderOpen],
-        ["Leads", LayoutGrid],
-        ["Relatórios", ChartNoAxesCombined],
-      ],
-    },
+  type MenuDestination = { label: string; page: string; report?: string };
+  const submenus: { label: string; icon: typeof House; children: MenuDestination[] }[] = [
+    { label: "Alunos", icon: Users, children: [
+      { label: "Listar Alunos", page: "Alunos" },
+      { label: "Gerenciar Leads", page: "Leads" },
+      { label: "Painel Geral de Recados", page: "Recados" },
+    ] },
+    { label: "Financeiro", icon: Wallet, children: [
+      { label: "Financeiro", page: "Financeiro" },
+      { label: "Financeiro Pessoal", page: "Financeiro pessoal" },
+    ] },
+    { label: "Relatórios", icon: ChartNoAxesCombined, children: [
+      { label: "Relatório de Aulas", page: "Relatórios", report: reportKinds[0] },
+      { label: "Relatório de Aluno", page: "Relatórios", report: reportKinds[1] },
+      { label: "Relatório Lista de Alunos", page: "Relatórios", report: reportKinds[2] },
+      { label: "Extrato de Aulas", page: "Relatórios", report: reportKinds[3] },
+      { label: "Relatório de Fluxo de Caixa", page: "Relatórios", report: reportKinds[4] },
+      { label: "Relatório Financeiro", page: "Relatórios", report: reportKinds[5] },
+    ] },
+    { label: "Parceiros", icon: Users, children: [
+      { label: "Listar Parceiros", page: "Parceiros" },
+      { label: "Painel Geral de Recados", page: "Recados para parceiros" },
+      { label: "Relatório de Trabalho Parceiro", page: "Trabalho de parceiros" },
+    ] },
   ];
+  const links = [
+    { label: "Início", icon: House },
+    { label: "Agenda", icon: CalendarDays },
+    { label: "Arquivos", icon: FolderOpen },
+    { label: "Atividades", icon: BookOpen },
+    { label: "Tarefas", icon: CheckCheck },
+    { label: "Benefícios", icon: Gift },
+  ];
+  const activeMenu = submenus.find((menu) => menu.children.some((child) => child.page === page));
+  const activeChild = activeMenu?.children.find((child) => child.page === page && (!child.report || child.report === reportKind));
+  const searchPages: MenuDestination[] = [
+    ...links.map((link) => ({ label: link.label, page: link.label })),
+    ...submenus.flatMap((menu) => menu.children.map((child) => ({
+      ...child, label: child.page.includes("Recados") ? child.label + " · " + menu.label : child.label,
+    }))),
+    ...["Configurações", "Central de ajuda"].map((label) => ({ label, page: label })),
+  ];
+  function renderMenu(menu: (typeof submenus)[number]) {
+    const expanded = expandedMenus.includes(menu.label);
+    const active = activeMenu?.label === menu.label;
+    const id = "submenu-" + submenus.indexOf(menu);
+    return (
+      <div className={`sidebar-section${expanded ? " expanded" : ""}`} key={menu.label}>
+        <button className={`nav sidebar-section-trigger${active ? " active" : ""}`}
+          aria-expanded={expanded} aria-controls={id}
+          onClick={() => {
+            if (expanded) {
+              setExpandedMenus((current) => current.filter((label) => label !== menu.label));
+              return;
+            }
+            const first = menu.children[0];
+            if (!active) navigate(first.page, { keepMenu: true, report: first.report });
+            else setExpandedMenus((current) => [...current, menu.label]);
+          }}>
+          <menu.icon size={19} />
+          <span>{menu.label}</span>
+          <ChevronDown className="submenu-chevron" size={15} aria-hidden="true" />
+        </button>
+        <div className="sidebar-submenu" id={id} role="group" aria-label={`Submenu de ${menu.label}`} hidden={!expanded}>
+          {menu.children.map((child) => (
+            <button key={child.label} aria-current={child === activeChild ? "page" : undefined}
+              onClick={() => navigate(child.page, { report: child.report })}>{child.label}</button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  function renderLink({ label, icon: Icon }: (typeof links)[number]) {
+    return (
+      <button key={label} className={`nav${page === label ? " active" : ""}`}
+        aria-current={page === label ? "page" : undefined} onClick={() => navigate(label)}>
+        <Icon size={19} /><span>{label === "Benefícios" ? "Meus Benefícios" : label}</span>
+      </button>
+    );
+  }
   return (
     <div className="app">
       <aside className={mobile ? "sidebar open" : "sidebar"}>
@@ -393,30 +491,17 @@ function App() {
         </a>
         <button className="teacher-profile" onClick={() => setModal("profile")}>
           <img src="/images/carol.jpg" alt="Perfil de Carol Hends" />
-          <b>Carol Hends</b><small>Professora de canto</small>
+          <b>{profile.name}</b><small>{profile.subject}</small>
         </button>
         <div className="sidebar-summary"><span><Users size={21} /><b>{students.length}</b> alunos</span><span><CalendarDays size={21} /><b>{lessons.length}</b> aulas</span></div>
         <button className="plan-strip" onClick={() => setModal("plans")}><b>Você está utilizando o plano FREE.</b><span>Conhecer os planos</span></button>
-        {nav.map((group) => (
-          <div className="navgroup" key={group.title}>
-            <label>{group.title}</label>
-            {group.items.map(([label, Icon]) => {
-              const I = Icon as typeof House;
-              return (
-                <button
-                  key={String(label)}
-                  className={page === label ? "nav active" : "nav"}
-                  onClick={() => navigate(String(label))}
-                >
-                  <I size={19} />
-                  <span>{String(label)}</span>
-                  {label === "Atividades" && <b>4</b>}
-                  {page === label && <span className="navdot" />}
-                </button>
-              );
-            })}
-          </div>
-        ))}
+        <nav className="navgroup teacher-navigation" aria-label="Menu do professor">
+          {links.slice(0, 2).map(renderLink)}
+          {submenus.slice(0, 2).map(renderMenu)}
+          {links.slice(2, 5).map(renderLink)}
+          {submenus.slice(2).map(renderMenu)}
+          {renderLink(links[5])}
+        </nav>
         <div className="sidebar-bottom">
           <button
             className="nav"
@@ -434,11 +519,11 @@ function App() {
           >
             <LogOut size={18} /> Sair e ver site
           </button>
-          <button className="nav" onClick={() => setModal("settings")}>
+          <button className={page === "Configurações" ? "nav active" : "nav"} onClick={() => navigate("Configurações")}>
             <Settings size={18} />
             Configurações
           </button>
-          <button className="nav" onClick={() => setModal("help")}>
+          <button className={page === "Central de ajuda" ? "nav active" : "nav"} onClick={() => navigate("Central de ajuda")}>
             <HelpCircle size={18} />
             Central de ajuda <ArrowUpRight size={14} />
           </button>
@@ -447,11 +532,11 @@ function App() {
       <main>
         <header className="topbar">
           <div className="breadcrumb">
-            <button className="mobile-menu" onClick={() => setMobile(!mobile)}>
+            <button className="mobile-menu" aria-label="Menu do professor" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
               <Menu size={20} />
             </button>
             Meu espaço <span>/</span>
-            <strong>{page}</strong>
+            <strong>{activeMenu?.label ?? page}</strong>
           </div>
           <div className="top-actions">
             <button
@@ -531,14 +616,15 @@ function App() {
                   <div className="eyebrow">
                     AGENDA DEMONSTRATIVA · NOVEMBRO DE 2026
                   </div>
-                  <h1>Bom dia, Carol</h1>
+                  <h1>Bom dia, {profile.name.split(" ")[0]}</h1>
                   <p>Confira suas aulas e compromissos.</p>
                 </div>
                 <div className="home-actions">
+                  <button className="secondary" onClick={() => setModal("guide")}>Primeiros passos</button>
                   <button className="secondary" onClick={() => setModal("birthdays")} aria-label="Aniversariantes do mês" title="Aniversariantes do mês">
                     <Cake size={20} />
                   </button>
-                  <button className="primary" onClick={() => setModal("event")}>
+                  <button className="primary" onClick={() => openEvent(lessonDate(eventDay))}>
                     <Plus size={17} /> Novo agendamento
                   </button>
                 </div>
@@ -609,10 +695,7 @@ function App() {
                         <button
                           className="more"
                           onClick={() => {
-                            setSelected(
-                              students.find((s) => s.name === l.student) ||
-                                null,
-                            );
+                            setActiveLessonId(l.id);
                             setModal("lesson");
                           }}
                         >
@@ -708,7 +791,7 @@ function App() {
                         onClick={() =>
                           setTasks(
                             tasks.map((x, j) =>
-                              j === i ? { ...x, done: !x.done } : x,
+                              j === i ? logTask({ ...x, done: !x.done }, x.done ? "Tarefa reaberta" : "Tarefa concluída") : x,
                             ),
                           )
                         }
@@ -720,7 +803,7 @@ function App() {
                       </button>
                     ))}
                     <div className="task-bottom">
-                      Acompanhe suas tarefas.
+                      <button className="text-button" onClick={() => navigate("Tarefas")}>Abrir lista de tarefas</button>
                     </div>
                   </section>
                 </div>
@@ -776,7 +859,7 @@ function App() {
                 <div>
                   <div className="eyebrow">GESTÃO DE AULAS</div>
                   <h1>
-                    {selected && page === "Alunos" ? selected.name : page}
+                    {selected && page === "Alunos" ? selected.name : page === "Relatórios" ? reportKind : page === "Trabalho de parceiros" ? "Relatório de Trabalho Parceiro" : page === "Recados para parceiros" ? "Painel Geral de Recados dos Parceiros" : page}
                   </h1>
                   <p>
                     {
@@ -790,37 +873,35 @@ function App() {
                         Atividades: "Crie atividades e acompanhe as entregas dos alunos.",
                         Leads: "Organize os contatos interessados nas suas aulas.",
                         Relatórios: "Consulte os resultados e exporte seus relatórios.",
-                        Arquivos: "Organize os materiais compartilhados nas aulas.",
+                        Arquivos: "Organize suas pastas e materiais.",
+                        Recados: "Escreva mensagens para alunos e grupos.",
+                        Tarefas: "Organize seus checklists pessoais.",
+                        "Financeiro pessoal": "Controle entradas e saídas pessoais.",
+                        Parceiros: "Gerencie cadastros e permissões de demonstração.",
+                        "Recados para parceiros": "Organize os avisos destinados aos seus parceiros.",
+                        "Trabalho de parceiros": "Acompanhe as aulas vinculadas a cada parceiro.",
+                        Benefícios: "Consulte os benefícios da plataforma.",
+                        Configurações: "Personalize as informações do seu estúdio.",
                       }[page]
                     }
                   </p>
                 </div>
-                <button
-                  className="primary"
-                  onClick={() => {
-                    if (page === "Alunos") {
-                      setStep(0);
-                      setBirthDate("");
-                      setModal("student");
-                    } else if (page === "Agenda") setModal("event");
-                    else if (page === "Financeiro") setModal("payment");
-                    else if (page === "Relatórios") exportData();
-                    else setModal(page === "Leads" ? "lead" : "activity");
-                  }}
-                >
-                  <Plus size={17} />
-                  {page === "Alunos"
-                    ? "Novo aluno"
-                    : page === "Agenda"
-                      ? "Novo agendamento"
-                      : page === "Financeiro"
-                        ? "Novo lançamento"
-                        : page === "Relatórios"
-                          ? "Exportar relatório"
-                          : page === "Leads"
-                            ? "Novo lead"
-                            : "Nova atividade"}
-                </button>
+                <div className="management-actions">
+                  {page === "Alunos" && (
+                    <button className="secondary" onClick={() => setModal("group")}><Plus size={17} /> Novo grupo</button>
+                  )}
+                  {["Alunos", "Agenda", "Financeiro", "Leads", "Atividades"].includes(page) && (
+                    <button className="primary" onClick={() => {
+                      const actions: Record<string, string> = { Alunos: "student", Agenda: "event", Financeiro: "payment", Leads: "lead", Atividades: "activity" };
+                      if (page === "Alunos") { setStep(0); setBirthDate(""); }
+                      if (page === "Agenda") openEvent(lessonDate(week * 7));
+                      else setModal(actions[page]);
+                    }}>
+                      <Plus size={17} />
+                      {{ Alunos: "Novo aluno", Agenda: "Novo agendamento", Financeiro: "Novo lançamento", Leads: "Novo lead", Atividades: "Nova atividade" }[page]}
+                    </button>
+                  )}
+                </div>
               </div>
               {page === "Alunos" &&
                 (selected ? (
@@ -945,7 +1026,7 @@ function App() {
                       <div className="search-field">
                         <Search size={17} />
                         <input
-                          placeholder="Buscar aluno..."
+                          placeholder={tab === "Grupos" ? "Buscar grupo..." : "Buscar por nome, e-mail ou curso"}
                           value={query}
                           onChange={(e) => setQuery(e.target.value)}
                         />
@@ -953,36 +1034,16 @@ function App() {
                     </div>
                     <div className="student-grid">
                       {tab === "Grupos"
-                        ? demoGroups.map(
-                            (g, i) => (
-                              <button
-                                className="card student-card"
-                                key={g}
-                                onClick={() =>
-                                  notify(
-                                    "Grupo com " +
-                                      (i ? 4 : 3) +
-                                      " alunos · Aulas às quartas, 18h",
-                                  )
-                                }
-                              >
-                                <span className="group-avatar">
-                                  <Users size={30} />
-                                </span>
-                                <h3>{g}</h3>
-                                <p>{i ? 4 : 3} alunos · Encontros semanais</p>
-                                <span className="status purple">
-                                  Grupo ativo
-                                </span>
-                              </button>
-                            ),
-                          )
+                        ? groups.filter((group) => matches(group.name, query)).map((group) => (
+                            <article className="card student-card" key={group.id}>
+                              <span className="group-avatar"><Users size={30} /></span>
+                              <h3>{group.name}</h3>
+                              <p>{group.members.length} alunos</p>
+                              <p>{students.filter((student) => group.members.includes(student.id)).map((student) => student.name).join(", ")}</p>
+                            </article>
+                          ))
                         : students
-                            .filter((s) =>
-                              s.name
-                                .toLowerCase()
-                                .includes(query.toLowerCase()),
-                            )
+                            .filter((s) => matches(`${s.name} ${s.email} ${s.course}`, query))
                             .map((s) => (
                               <button
                                 className="card student-card"
@@ -1018,16 +1079,12 @@ function App() {
                 <section className="card calendar">
                   <div className="toolbar">
                     <div className="calendar-controls">
-                      <button onClick={() => setWeek(week - 1)}>
+                      <button aria-label="Período anterior" onClick={() => moveCalendar(-1)}>
                         <ChevronLeft size={18} />
                       </button>
-                      <h3>
-                        {week === 0
-                          ? "16 – 20"
-                          : 16 + week * 7 + " – " + (20 + week * 7)}{" "}
-                        de novembro
-                      </h3>
-                      <button onClick={() => setWeek(week + 1)}>
+                      <h3>{view === "Semana" ? calendarFormat.formatRange(weekStart, weekEnd) :
+                        new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(weekStart)}</h3>
+                      <button aria-label="Próximo período" onClick={() => moveCalendar(1)}>
                         <ChevronRight size={18} />
                       </button>
                       <button className="secondary" onClick={() => setWeek(0)}>
@@ -1072,7 +1129,7 @@ function App() {
                                   l.id === id
                                     ? {
                                         ...l,
-                                        day: i,
+                                        day: week * 7 + i,
                                         subject:
                                           l.subject.split(" · Reagendada")[0] +
                                           " · Reagendada " +
@@ -1086,14 +1143,14 @@ function App() {
                           >
                             <div
                               className={
-                                i === 0 ? "day-head current" : "day-head"
+                                week === 0 && i === 0 ? "day-head current" : "day-head"
                               }
                             >
                               {d}
-                              <b>{16 + week * 7 + i}</b>
+                              <b>{Number(lessonDate(week * 7 + i).slice(-2))}</b>
                             </div>
                             {lessons
-                              .filter((l) => (l.day ?? 0) === i)
+                              .filter((l) => (l.day ?? 0) === week * 7 + i)
                               .map((l, j) => (
                                 <button
                                   draggable
@@ -1107,11 +1164,7 @@ function App() {
                                   style={{ top: 76 + j * 116 + (i % 2) * 45 }}
                                   key={l.id}
                                   onClick={() => {
-                                    setSelected(
-                                      students.find(
-                                        (s) => s.name === l.student,
-                                      ) || null,
-                                    );
+                                    setActiveLessonId(l.id);
                                     setModal("lesson");
                                   }}
                                 >
@@ -1133,12 +1186,18 @@ function App() {
                     </div>
                   ) : (
                     <div className="month-grid">
-                      {Array.from({ length: 35 }, (_, i) => (
-                        <button key={i} onClick={() => setModal("event")}>
-                          <b>{(i % 30) + 1}</b>
-                          {i % 3 === 0 && <span>2 aulas agendadas</span>}
-                        </button>
-                      ))}
+                      {Array.from({ length: monthStart.getDay() }, (_, i) => <div key={`empty-${i}`} />)}
+                      {Array.from({ length: monthLength }, (_, i) => {
+                        const date = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
+                        const records = lessons.filter((item) => lessonDate(item.day) === date);
+                        return <div className="month-date" key={date}>
+                          <button className="text-button" aria-label={`Agendar aula em ${date}`} onClick={() => openEvent(date)}>{i + 1}</button>
+                          {records.map((item) => <button className="month-lesson" key={item.id} onClick={() => {
+                            setActiveLessonId(item.id);
+                            setModal("lesson");
+                          }}>{item.time} · {item.student}</button>)}
+                        </div>;
+                      })}
                     </div>
                   )}
                   <div className="calendar-footer">
@@ -1204,17 +1263,12 @@ function App() {
                             <th>VENCIMENTO</th>
                             <th>VALOR</th>
                             <th>STATUS</th>
+                            <th>SITUAÇÃO DO PRAZO</th>
                             <th>AÇÕES</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {payments
-                            .filter(
-                              (p) =>
-                                tab === "Todos" ||
-                                (tab === "Pagos" ? p.paid : !p.paid),
-                            )
-                            .map((p) => (
+                          {visiblePayments.map((p) => (
                               <tr key={p.id}>
                                 <td>
                                   <div className="table-person">
@@ -1238,6 +1292,7 @@ function App() {
                                     {p.paid ? "Pago" : "Pendente"}
                                   </span>
                                 </td>
+                                <td>{paymentStatus(p)}</td>
                                 <td>
                                   {p.paid ? (
                                     <CheckCheck size={18} color="#429078" />
@@ -1268,16 +1323,18 @@ function App() {
                 </>
               )}
               {page === "Leads" && (
+                <>
+                <section className="card management">
+                  <h2>Resumo do funil</h2>
+                  <div className="management-totals">
+                    <p>Em andamento <strong>{leadCounts.slice(0, 5).reduce((sum, count) => sum + count, 0)}</strong></p>
+                    <p>Fechados <strong>{leadCounts[5]}</strong></p>
+                    <p>Perdidos <strong>{leadCounts[6]}</strong></p>
+                  </div>
+                  {leadCounts[0] > 0 && <p>{leadCounts[0]} contato(s) na etapa inicial. Combine o próximo passo com esses interessados.</p>}
+                </section>
                 <div className="kanban">
-                  {[
-                    "Contato Inicial",
-                    "Negociação",
-                    "Aula Experimental",
-                    "Aguardando Agenda",
-                    "Aguardando Contrato",
-                    "Fechado",
-                    "Perdido",
-                  ].map((stage, i) => (
+                  {leadStageNames.map((stage, i) => (
                     <div
                       className="kanban-column"
                       key={stage}
@@ -1291,12 +1348,12 @@ function App() {
                       <h3>
                         <span className={"kanban-dot c" + i} />
                         {stage}
-                        <small>{i === 0 ? 2 : 1}</small>
+                        <small>{leadCounts[i]}</small>
                       </h3>
                       {extraLeads
                         .filter(
                           (l) =>
-                            (leadStages["extra-lead-" + l.email] ?? 0) === i,
+                            newLeadStage(l.email) === i,
                         )
                         .map((l, j) => (
                           <div
@@ -1314,19 +1371,10 @@ function App() {
                             <span className="status purple">Novo contato</span>
                           </div>
                         ))}
-                      {[
-                        "Fernanda Souza",
-                        "André Moreira",
-                        "Thiago Costa",
-                        "Camila Mendes",
-                        "Bruno Melo",
-                        "Isabela Dias",
-                        "Luiza Rocha",
-                        "Daniel Alves",
-                      ].map((leadName, n) => {
+                      {demoLeads.map((leadName, n) => {
                         const id = "lead-" + n;
                         return (
-                          (leadStages[id] ?? (n < 2 ? 0 : n - 1)) === i && (
+                          demoLeadStage(n) === i && (
                             <div
                               id={id}
                               draggable
@@ -1351,6 +1399,8 @@ function App() {
                                 className="text-button"
                                 onClick={() => {
                                   setName(leadName);
+                                  setEmail("");
+                                  setBirthDate("");
                                   setModal("student");
                                   setStep(0);
                                 }}
@@ -1364,6 +1414,7 @@ function App() {
                     </div>
                   ))}
                 </div>
+                </>
               )}
               {page === "Atividades" && (
                 <section className="card">
@@ -1386,7 +1437,7 @@ function App() {
                       ))}
                     </div>
                   </div>
-                  {extraActivities.map((a, i) => (
+                  {extraActivities.map((a, i) => (tab === "Todos" || tab === assignmentStatus(a)) && (
                     <div className="activity-row" key={i}>
                       <span className="activity-icon">
                         <BookOpen size={23} />
@@ -1394,8 +1445,16 @@ function App() {
                       <div>
                         <h3>{a.title}</h3>
                         <p>{a.description}</p>
+                        {a.studentId && <small>{students.find((student) => student.id === a.studentId)?.name}</small>}
+                        {a.answer && <p className="management-message">Resposta: {a.answer}</p>}
                       </div>
-                      <span className="status purple">Pendente</span>
+                      <span className="status purple">{assignmentStatus(a)}</span>
+                      {assignmentStatus(a) === "Respondido" && (
+                        <div className="management-actions">
+                          {(["Avaliado", "Refazer"] as const).map((status) => <button className="secondary" key={status}
+                            onClick={() => setExtraActivities((current) => current.map((item) => item.id === a.id ? { ...item, status } : item))}>{status === "Avaliado" ? "Marcar como avaliada" : "Pedir para refazer"}</button>)}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {[
@@ -1441,105 +1500,28 @@ function App() {
                   )}
                 </section>
               )}
-              {page === "Relatórios" && (
-                <>
-                  <section className="stats">
-                    <Stat
-                      label="Receita total do ano"
-                      value="R$ 67.420"
-                      icon={<TrendingUp />}
-                      note="18% acima do ano anterior"
-                      trend
-                    />
-                    <Stat
-                      label="Aulas realizadas"
-                      value="328"
-                      icon={<GraduationCap />}
-                      note="92% de presença média"
-                    />
-                    <Stat
-                      label="Evolução de alunos"
-                      value="+24%"
-                      icon={<Users />}
-                      note="Crescendo com propósito"
-                      trend
-                    />
-                  </section>
-                  <div className="report-grid">
-                    <section className="card chart-card">
-                      <h3>Seu crescimento em 2026</h3>
-                      <p>Receita recebida por mês</p>
-                      <div className="bar-chart">
-                        {[35, 46, 40, 53, 49, 61, 58, 72, 65, 79, 88, 76].map(
-                          (v, i) => (
-                            <div key={i}>
-                              <span>{money(v * 80)}</span>
-                              <i style={{ height: v + "%" }} />
-                              <small>
-                                {
-                                  [
-                                    "Jan",
-                                    "Fev",
-                                    "Mar",
-                                    "Abr",
-                                    "Mai",
-                                    "Jun",
-                                    "Jul",
-                                    "Ago",
-                                    "Set",
-                                    "Out",
-                                    "Nov",
-                                    "Dez",
-                                  ][i]
-                                }
-                              </small>
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    </section>
-                    <section className="card chart-card">
-                      <h3>Cada aula conta</h3>
-                      <p>Distribuição de status</p>
-                      <div className="donut">
-                        <div>
-                          <strong>328</strong>
-                          <span>aulas realizadas</span>
-                        </div>
-                      </div>
-                      <div className="chart-legend">
-                        <span>● Realizadas 82%</span>
-                        <span>● Pendentes 12%</span>
-                        <span>● Canceladas 6%</span>
-                      </div>
-                    </section>
-                  </div>
-                  <section className="ai-report">
-                    <MessageCircle />
+              {page === "Relatórios" && <Reports lessons={lessons} students={students} groups={groups} payments={payments} kind={reportKind} onKindChange={setReportKind} />}
+              {page === "Arquivos" && <Files />}
+              {page === "Recados" && <Bulletins students={students} groups={groups} />}
+              {page === "Tarefas" && <Tasks tasks={tasks} setTasks={setTasks} />}
+              {page === "Financeiro pessoal" && <PersonalFinance />}
+              {page === "Parceiros" && <Partners records={partners} setRecords={setPartners} />}
+              {page === "Recados para parceiros" && <Bulletins partners={partners} />}
+              {page === "Trabalho de parceiros" && <PartnerWorkReport partners={partners} lessons={lessons} />}
+              {page === "Configurações" && <SettingsPanel profile={profile} setProfile={setProfile} />}
+              {page === "Central de ajuda" && <Support />}
+              {page === "Benefícios" && (
+                <section className="card management">
+                  <h2>Benefícios para professores</h2>
+                  <p>Promoções e vantagens de parceiros aparecem aqui quando disponíveis.</p>
+                  <article className="benefit-preview">
+                    <Gift size={24} aria-hidden="true" />
                     <div>
-                      <h3>Converse com seus números</h3>
-                      <p>
-                        Pergunte sobre receitas, frequência ou evolução dos
-                        alunos.
-                      </p>
+                      <span className="benefit-example">Exemplo do catálogo</span>
+                      <h3>Flui · Recursos para aulas de inglês</h3>
+                      <p>Atividades de prática para leitura, escuta, escrita e conversação. Ofertas ativas aparecem aqui quando estiverem disponíveis.</p>
                     </div>
-                    <button className="primary" onClick={() => setModal("ai")}>
-                      Perguntar à iorIA <ArrowRight size={16} />
-                    </button>
-                  </section>
-                </>
-              )}
-              {page === "Arquivos" && (
-                <section className="card empty-state">
-                  <FolderOpen size={52} />
-                  <h2>Um lugar para todo o seu conhecimento.</h2>
-                  <p>
-                    Organize partituras, exercícios e materiais para
-                    compartilhar com seus alunos.
-                  </p>
-                  <button className="primary" onClick={() => setModal("plans")}>
-                    Conhecer o módulo de arquivos <ArrowUpRight size={16} />
-                  </button>
+                  </article>
                 </section>
               )}
             </>
@@ -1590,7 +1572,37 @@ function App() {
             <button className="close" aria-label="Fechar" onClick={() => setModal("")}>
               <X size={20} />
             </button>
-            {modal === "birthdays" ? (
+            {modal === "guide" ? (
+              <>
+                <Owl />
+                <h2>Primeiros passos</h2>
+                <p>Etapa {guideStep + 1} de {guide.length}</p>
+                <h3>{guide[guideStep].label}</h3>
+                <p>{guide[guideStep].description}</p>
+                <div className="management-actions">
+                  {guideStep > 0 && <button className="secondary" onClick={() => setGuideStep(guideStep - 1)}>Anterior</button>}
+                  <button className="primary" onClick={() => {
+                    const step = guide[guideStep];
+                    setGuideStep(Math.min(guideStep + 1, guide.length - 1));
+                    navigate(step.page);
+                    if (step.modal === "student") { setStep(0); setBirthDate(""); }
+                    if (step.modal === "event") openEvent(lessonDate());
+                    else setModal(step.modal);
+                  }}>Abrir etapa</button>
+                  {guideStep + 1 < guide.length && <button className="secondary" onClick={() => setGuideStep(guideStep + 1)}>Próxima etapa</button>}
+                </div>
+              </>
+            ) : modal === "group" ? (
+              <>
+                <h2>Novo grupo de alunos</h2>
+                <GroupForm groups={groups} students={students} onCreate={(group) => {
+                  setGroups((current) => [...current, group]);
+                  setTab("Grupos");
+                  setQuery("");
+                  setModal("");
+                }} />
+              </>
+            ) : modal === "birthdays" ? (
               <>
                 <h2 id="daily-dialog-title">Aniversariantes do mês</h2>
                 <p className="birthday-month">{birthdayMonthName} · A lista usa as datas informadas no cadastro.</p>
@@ -1700,6 +1712,9 @@ function App() {
                     )}
                   </div>
                 )}
+                <button className="text-button" onClick={() => { setModal(""); navigate("Central de ajuda"); }}>
+                  Abrir Central de ajuda
+                </button>
                 <button
                   className="primary full"
                   disabled={!ai.trim()}
@@ -1875,22 +1890,23 @@ function App() {
                       notify("O horário de término deve ser posterior ao início.");
                       return;
                     }
-                    setLessons([
-                      ...lessons,
-                      {
-                        id: Date.now(),
-                        student: String(f.get("student")),
-                        subject: String(f.get("subject")),
-                        time: String(f.get("time")),
-                        end: String(f.get("end")),
-                        day: eventDay,
-                        online: f.get("format") === "Online",
-                        status: "Pendente",
-                        color: "violet",
-                      },
-                    ]);
+                    const date = String(f.get("date"));
+                    const repeat = Number(f.get("repeat"));
+                    const entries: Lesson[] = Array.from({ length: repeat }, (_, index) => ({
+                      id: Date.now() + index,
+                      student: String(f.get("student")),
+                      subject: String(f.get("subject")),
+                      time: String(f.get("time")),
+                      end: String(f.get("end")),
+                      day: lessonDay(date) + index * 7,
+                      online: f.get("format") === "Online",
+                      status: "Pendente",
+                      color: "violet",
+                      partnerId: String(f.get("partner") || "") || undefined,
+                    }));
+                    setLessons((current) => [...current, ...entries]);
                     setModal("");
-                    notify(`Agendamento criado para ${16 + eventDay} de novembro.`);
+                    notify(entries.length === 1 ? "Agendamento criado." : `${entries.length} aulas agendadas semanalmente.`);
                   }}
                 >
                   <label>
@@ -1899,8 +1915,8 @@ function App() {
                       <optgroup label="Alunos">
                         {students.map((student) => <option key={student.id}>{student.name}</option>)}
                       </optgroup>
-                      <optgroup label="Grupos demonstrativos">
-                        {demoGroups.map((group) => <option key={group}>{group}</option>)}
+                      <optgroup label="Grupos">
+                        {groups.map((group) => <option key={group.id}>{group.name}</option>)}
                       </optgroup>
                     </select>
                   </label>
@@ -1915,7 +1931,7 @@ function App() {
                   <div className="form-row">
                     <label>
                       Data
-                      <input type="date" readOnly value={`2026-11-${16 + eventDay}`} />
+                      <input type="date" name="date" required defaultValue={eventDate || lessonDate(eventDay)} />
                     </label>
                     <label>
                       Horário
@@ -1938,6 +1954,20 @@ function App() {
                       <option>Presencial</option>
                     </select>
                   </label>
+                  <label>
+                    Recorrência
+                    <select name="repeat">
+                      <option value="1">Aula única</option>
+                      <option value="4">Semanal · 4 aulas</option>
+                      <option value="8">Semanal · 8 aulas</option>
+                    </select>
+                  </label>
+                  {partners.some((partner) => !partner.archived) && <label>Parceiro responsável
+                    <select name="partner">
+                      <option value="">Sem parceiro</option>
+                      {partners.filter((partner) => !partner.archived).map((partner) => <option value={partner.id} key={partner.id}>{partner.name}</option>)}
+                    </select>
+                  </label>}
                   <button className="primary full">
                     Criar agendamento <Check size={16} />
                   </button>
@@ -1995,7 +2025,8 @@ function App() {
                     const text = String(
                       new FormData(e.currentTarget).get("task"),
                     );
-                    setTasks([...tasks, { text, done: false }]);
+                    if (!text.trim()) return;
+                    setTasks((current) => [...current, logTask({ text: text.trim(), done: false }, "Tarefa criada")]);
                     setModal("");
                     notify("Tarefa adicionada.");
                   }}
@@ -2014,41 +2045,41 @@ function App() {
                   </button>
                 </form>
               </>
-            ) : modal === "lesson" ? (
+            ) : modal === "lesson" && activeLesson ? (
               <>
                 <h2>Detalhes da aula</h2>
                 <div className="student-detail-head">
-                  <Avatar name={selected?.name || "Aluno"} />
+                  <Avatar name={activeLesson.student} />
                   <div>
-                    <h3>{selected?.name || "Aula particular"}</h3>
-                    <p>16 de novembro · 60 minutos</p>
+                    <h3>{activeLesson.student}</h3>
+                    <p>{activeLesson.subject}</p>
+                    <p>{lessonDate(activeLesson.day).split("-").reverse().join("/")} · {activeLesson.time}–{activeLesson.end} · {activeLesson.status}</p>
                   </div>
                 </div>
                 <label>
                   Anotações da aula
                   <textarea
                     placeholder="Como foi a aula?"
-                    defaultValue={
-                      localStorage.getItem("lesson-note-" + selected?.id) || ""
-                    }
-                    onBlur={(e) =>
-                      localStorage.setItem(
-                        "lesson-note-" + selected?.id,
-                        e.target.value,
-                      )
-                    }
+                    defaultValue={localStorage.getItem(activeLessonNoteKey) ??
+                      localStorage.getItem("lesson-note-" + students.find((student) => student.name === activeLesson.student)?.id) ?? ""}
+                    onBlur={(e) => localStorage.setItem(activeLessonNoteKey, e.target.value)}
                   />
                 </label>
-                <button
-                  className="primary full"
-                  onClick={() => {
-                    const l = lessons.find((l) => l.student === selected?.name);
-                    if (l) complete(l.id);
-                    setModal("");
-                  }}
-                >
-                  Marcar como realizada <Check size={16} />
-                </button>
+                {partners.length > 0 && <label>Parceiro responsável
+                  <select value={activeLesson.partnerId ?? ""} onChange={(event) => {
+                    const partnerId = event.target.value || undefined;
+                    setLessons((current) => current.map((lesson) => lesson.id === activeLesson.id ? { ...lesson, partnerId } : lesson));
+                  }}>
+                    <option value="">Sem parceiro</option>
+                    {partners.filter((partner) => !partner.archived || partner.id === activeLesson.partnerId).map((partner) =>
+                      <option value={partner.id} key={partner.id}>{partner.name}{partner.archived ? " (arquivado)" : ""}</option>
+                    )}
+                  </select>
+                </label>}
+                {activeLesson.status === "Pendente" && <button className="primary full" onClick={() => {
+                  complete(activeLesson.id);
+                  setModal("");
+                }}>Marcar como realizada <Check size={16} /></button>}
               </>
             ) : modal === "review" ? (
               <>
@@ -2097,34 +2128,19 @@ function App() {
                   />
                 </div>
                 <div className="search-results">
-                  {[
-                    "Início",
-                    "Agenda",
-                    "Alunos",
-                    "Financeiro",
-                    "Atividades",
-                    "Relatórios",
-                  ]
-                    .filter((p) =>
-                      p.toLowerCase().includes(query.toLowerCase()),
-                    )
-                    .map((p) => (
-                      <button
-                        onClick={() => {
-                          navigate(p);
-                          setModal("");
-                        }}
-                        key={p}
-                      >
-                        {p}
-                        <ArrowRight size={16} />
-                      </button>
-                    ))}
+                  {searchPages.filter((item) => matches(item.label, query)).map((item) => (
+                    <button key={item.label} onClick={() => {
+                      navigate(item.page, { report: item.report });
+                      setModal("");
+                    }}>
+                      {item.label}<ArrowRight size={16} />
+                    </button>
+                  ))}
                   {students
                     .filter(
                       (s) =>
                         query &&
-                        s.name.toLowerCase().includes(query.toLowerCase()),
+                        matches(`${s.name} ${s.email} ${s.course}`, query),
                     )
                     .map((s) => (
                       <button
@@ -2171,44 +2187,14 @@ function App() {
                   Demonstração visual. Não há integração com pagamentos.
                 </div>
               </>
-            ) : modal === "help" ? (
-              <>
-                <h2>Vamos te ajudar.</h2>
-                <p>Um guia rápido para você aproveitar seu espaço.</p>
-                {[
-                  "Cadastre alunos e gere sua primeira aula.",
-                  "Confirme aulas realizadas na tela Início.",
-                  "Acompanhe e confirme pagamentos no Financeiro.",
-                  "Use a iorIA para explorar ações simuladas.",
-                ].map((t) => (
-                  <p className="help-item" key={t}>
-                    <Check size={16} />
-                    {t}
-                  </p>
-                ))}
-              </>
-            ) : modal === "settings" || modal === "profile" ? (
+            ) : modal === "profile" ? (
               <>
                 <h2>Seu espaço, do seu jeito.</h2>
                 <div className="student-detail-head">
-                  <img className="settings-avatar" src="/images/carol.jpg" />
-                  <div>
-                    <h3>Carol Hends</h3>
-                    <p>Professora de canto e técnica vocal</p>
-                  </div>
+                  <img className="settings-avatar" src="/images/carol.jpg" alt="" />
+                  <div><h3>{profile.name}</h3><p>{profile.subject}</p></div>
                 </div>
-                <label>
-                  Nome do estúdio
-                  <input
-                    defaultValue={
-                      localStorage.getItem("studio") || "Estúdio Carol Hends"
-                    }
-                    onBlur={(e) => {
-                      localStorage.setItem("studio", e.target.value);
-                      notify("Preferência salva neste navegador.");
-                    }}
-                  />
-                </label>
+                <button className="secondary" onClick={() => { setModal(""); navigate("Configurações"); }}>Editar perfil</button>
                 <div className="demo-notice">
                   Ambiente de demonstração com dados fictícios. Os dados ficam
                   neste navegador.
@@ -2247,8 +2233,10 @@ function App() {
                       setExtraActivities([
                         ...extraActivities,
                         {
-                          title: String(f.get("title")),
-                          description: String(f.get("description")),
+                          id: crypto.randomUUID(),
+                          title: String(f.get("title")).trim(),
+                          description: String(f.get("description")).trim(),
+                          studentId: Number(f.get("student")) || undefined,
                         },
                       ]);
                     setModal("");
@@ -2269,6 +2257,12 @@ function App() {
                     {modal === "lead" ? "E-mail" : "Descrição"}
                     <textarea name="description" required />
                   </label>
+                  {modal === "activity" && <label>Destinatário da atividade
+                    <select name="student">
+                      <option value="">Sem destinatário</option>
+                      {students.map((student) => <option value={student.id} key={student.id}>{student.name}</option>)}
+                    </select>
+                  </label>}
                   <button className="primary full">
                     Salvar <Check size={16} />
                   </button>

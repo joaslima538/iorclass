@@ -1,3 +1,6 @@
+import { assignmentsKey, assignmentStatus, bulletinsKey, groupsKey, initialGroups, readLocal, useLocal, defaultProfile, profileKey } from "./local";
+import type { Assignment, Bulletin } from "./local";
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -426,6 +429,7 @@ export function PublicExperience({ route }: { route: string }) {
 }
 export function StudentExperience() {
   const [tab, setTab] = useState("Início");
+  const [assignments, setAssignments] = useLocal<Assignment[]>(assignmentsKey, []);
   const [notice, setNotice] = useState("");
   const [answer, setAnswer] = useState(
     () => localStorage.getItem("ior-student-answer") || "",
@@ -436,9 +440,11 @@ export function StudentExperience() {
   const [notes, setNotes] = useState(
     () => localStorage.getItem("ior-student-notes") || "",
   );
-  const lessons = JSON.parse(
-    localStorage.getItem("ior-lessons") || "[]",
-  ).filter((l: { student: string }) => l.student === "Mariana Costa");
+  const profile = readLocal(profileKey, defaultProfile);
+  const groups = readLocal(groupsKey, initialGroups).filter((group) => group.members.includes(1));
+  const bulletins = readLocal<Bulletin[]>(bulletinsKey, []).filter((item) => item.recipients.includes(1));
+  const lessons = readLocal<{ id: number; student: string; time: string; end: string; subject: string; status: string }[]>("ior-lessons", [])
+    .filter((lesson) => lesson.student === "Mariana Costa" || groups.some((group) => group.name === lesson.student));
   const studentLessons = lessons.length
     ? lessons
     : [
@@ -462,9 +468,10 @@ export function StudentExperience() {
     ["Atividades", BookOpen],
     ["Pagamentos", Wallet],
     ["Materiais", FolderOpen],
+    ["Recados", MessageCircle],
   ];
   return (
-    <div className="student-app">
+    <div className="student-app" style={{ "--student-accent": profile.color } as CSSProperties}>
       <header className="student-header">
         <Brand />
         <span className="student-space-label">
@@ -485,7 +492,7 @@ export function StudentExperience() {
             <span>MC</span>
             <h3>Mariana Costa</h3>
             <p>Canto e técnica vocal</p>
-            <small>Professora Carol Hends</small>
+            <small>{profile.name} · {profile.studio}</small>
           </div>
           <nav>
             {nav.map(([name, Icon]) => {
@@ -596,6 +603,11 @@ export function StudentExperience() {
                 <ArrowRight size={18} />
               </button>
             </>
+          ) : tab === "Recados" ? (
+            <section className="card management">
+              <h2>Recados do professor</h2>
+              {bulletins.length ? bulletins.map((item) => <p className="management-message" key={item.id}>{item.text}</p>) : <p>Nenhum recado para você.</p>}
+            </section>
           ) : tab === "Minhas aulas" ? (
             <>
               <div className="card student-lessons">
@@ -662,6 +674,7 @@ export function StudentExperience() {
               </section>
             </>
           ) : tab === "Atividades" ? (
+            <>
             <section className="card student-exercise">
               <span className={"status " + (sent ? "green" : "purple")}>
                 {sent ? "Respondido" : "Pendente"}
@@ -698,6 +711,25 @@ export function StudentExperience() {
                 <Send size={15} />
               </button>
             </section>
+            {assignments.filter((item) => item.id && item.studentId === 1).map((item) => (
+              <section className="card management" key={item.id}>
+                <span className="status purple">{assignmentStatus(item)}</span>
+                <h2>{item.title}</h2>
+                <p>{item.description}</p>
+                {item.status === "Avaliado" ? <p className="management-message">{item.answer}</p> :
+                  <form onSubmit={(event) => {
+                    event.preventDefault();
+                    const answer = String(new FormData(event.currentTarget).get("answer")).trim();
+                    if (!answer) return;
+                    setAssignments((current) => current.map((record) => record.id === item.id ? { ...record, answer, status: undefined } : record));
+                    setNotice("Resposta salva neste navegador.");
+                  }}>
+                    <label>Resposta para {item.title}<textarea name="answer" required maxLength={3000} defaultValue={item.answer} /></label>
+                    <button className="primary">Salvar resposta da atividade</button>
+                  </form>}
+              </section>
+            ))}
+            </>
           ) : tab === "Pagamentos" ? (
             <>
               <div className="demo-notice">

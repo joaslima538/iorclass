@@ -55,10 +55,10 @@ test("teacher workflow and persistence", async ({ page }) => {
   for (const section of ["Agenda", "Leads", "Atividades", "Relatórios"]) {
     await page
       .locator(".sidebar")
-      .getByRole("button", { name: new RegExp("^" + section) })
+      .getByRole("button", { name: new RegExp("^" + (section === "Leads" ? "Gerenciar Leads" : section)) })
       .click();
     await expect(
-      page.getByRole("heading", { name: section, exact: true }),
+      page.getByRole("heading", { name: section === "Relatórios" ? "Relatório de Aulas" : section, exact: true }),
     ).toBeVisible();
   }
   await page
@@ -96,8 +96,9 @@ test("create lead and activity, and reschedule a lesson", async ({ page }) => {
   await page.goto("http://127.0.0.1:5173/#professor");
   await page
     .locator(".sidebar")
-    .getByRole("button", { name: "Leads", exact: true })
+    .getByRole("button", { name: "Alunos", exact: true })
     .click();
+  await page.getByRole("group", { name: "Submenu de Alunos" }).getByRole("button", { name: "Gerenciar Leads" }).click();
   await page.getByRole("button", { name: "Novo lead", exact: true }).click();
   await page.getByLabel("Nome do contato").fill("Novo Contato");
   await page.getByLabel("E-mail").fill("lead@example.com");
@@ -120,8 +121,9 @@ test("create lead and activity, and reschedule a lesson", async ({ page }) => {
   await page.reload();
   await page
     .locator(".sidebar")
-    .getByRole("button", { name: "Leads", exact: true })
+    .getByRole("button", { name: "Alunos", exact: true })
     .click();
+  await page.getByRole("group", { name: "Submenu de Alunos" }).getByRole("button", { name: "Gerenciar Leads" }).click();
   await expect(
     page
       .locator(".kanban-column")

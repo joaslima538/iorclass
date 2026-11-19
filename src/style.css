@@ -4655,3 +4655,216 @@ main { margin-left:240px; }
 .birthday-month::first-letter {
   text-transform: uppercase;
 }
+
+.management {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: clamp(14px, 2.2vw, 28px);
+  margin-bottom: 18px;
+  font-size: 15px;
+}
+.management h2 { font-size: 21px; }
+.management h3 { font-size: 17px; }
+.management p { margin: 0; }
+.management form,
+.management-detail {
+  display: grid;
+  gap: 12px;
+}
+.management label:not(.management-check, .management-choices label) {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.management input:not([type="checkbox"]),
+.management textarea,
+.management select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #cbd5e4;
+  border-radius: 6px;
+  background: white;
+  color: #263450;
+  font: inherit;
+}
+.management input[type="color"] { height: 42px; padding: 4px; }
+.management textarea { min-height: 74px; resize: vertical; }
+.management-fields,
+.management-columns,
+.management-totals {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  align-items: end;
+}
+.management form.management-fields { display: grid; }
+.management-columns { align-items: start; }
+.management-actions,
+.management-check,
+.management-choices label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.management-choices {
+  border: 1px solid #dbe1eb;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr));
+  gap: 8px;
+  border-radius: 6px;
+  min-width: 0;
+}
+.management-choices legend { padding-inline: 4px; }
+.modal .management-choices label { display: flex; margin: 0; }
+.modal .management-choices input[type="checkbox"] { width: auto; }
+.management input[type="checkbox"],
+.management-choices input[type="checkbox"] { accent-color: #344bfa; }
+.management-table { overflow-x: auto; }
+.management-table table { text-align: left; }
+.management-table th,
+.management-table td { padding: 9px; color: #36445c; overflow-wrap: anywhere; }
+.management-table th { color: #465670; background: #f2f5fa; }
+.management-table .text-button { white-space: normal; }
+.management-totals p,
+.management-task,
+.management-detail,
+.management-empty {
+  padding: 12px;
+  border-radius: 6px;
+  background: #f2f5fa;
+}
+.management-totals strong { display: block; font-size: 19px; }
+.management-task {
+  display: flex;
+  gap: 9px;
+  margin-top: 8px;
+}
+.management-message { white-space: pre-wrap; overflow-wrap: anywhere; }
+.management-chart meter { width: min(100%, 340px); }
+.student-app .student-sidebar nav button.selected { background: var(--student-accent, #344bfa); }
+.student-app .student-welcome { border-inline-start: 4px solid var(--student-accent, #344bfa); }
+@media (max-width: 700px) {
+  .student-sidebar nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media print {
+  .app:has(.report-print) .sidebar,
+  .app:has(.report-print) .topbar,
+  .app:has(.report-print) .overview-stats,
+  .app:has(.report-print) .page-heading,
+  .app:has(.report-print) .mobile-nav,
+  .app:has(.report-print) .floating-ai,
+  .report-print .report-controls { display: none; }
+  .app:has(.report-print) main,
+  .app:has(.report-print) .content { margin: 0; padding: 0; }
+  .report-print { border: 0; }
+  .report-print .management-table { overflow: visible; }
+}
+
+.month-date {
+  min-width: 0;
+  min-height: 88px;
+  border: 1px solid #eef0f5;
+  padding: 5px;
+}
+.month-grid .month-date button {
+  display: block;
+  height: auto;
+  padding: 5px;
+  border: 0;
+  text-align: left;
+}
+.month-grid .month-lesson {
+  width: 100%;
+  overflow-wrap: anywhere;
+  color: #253aab;
+  background: #edf1ff;
+  border-radius: 4px;
+  margin-block: 3px;
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .student-sidebar nav { display: grid; }
+  .student-sidebar nav button { min-width: 0; white-space: normal; }
+  .month-date { padding: 2px; }
+}
+
+.teacher-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sidebar .sidebar-section {
+  border-radius: 8px;
+}
+.sidebar .sidebar-section.expanded {
+  background: #e2eaff;
+}
+.sidebar .sidebar-section.expanded > .nav {
+  background: #344bfa;
+  color: #fff;
+  border-radius: 8px 8px 0 0;
+}
+.sidebar-section-trigger .submenu-chevron {
+  margin-left: auto;
+}
+.sidebar-section-trigger[aria-expanded="true"] .submenu-chevron {
+  transform: rotate(180deg);
+}
+.sidebar-submenu:not([hidden]) {
+  display: grid;
+  gap: 3px;
+  padding: 5px 6px 7px 13px;
+}
+.sidebar-submenu button {
+  justify-content: flex-start;
+  min-height: 34px;
+  padding: 6px 8px;
+  text-align: left;
+  border-radius: 5px;
+  color: #213660;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.sidebar-submenu button:hover,
+.sidebar-submenu button[aria-current="page"] {
+  background: #ccd9ff;
+  color: #172e80;
+}
+.sidebar-submenu button[aria-current="page"] {
+  font-weight: 700;
+}
+.files-library {
+  color: #25354f;
+}
+.files-library :is(h2, label, legend, select, input, th, td) {
+  color: #25354f;
+}
+.files-library :is(.management-empty, p) {
+  color: #4b5b70;
+}
+.files-library .management-actions button[aria-pressed="true"] {
+  background: #e8efff;
+  border-color: #aabaf1;
+  color: #273c91;
+}
+.benefit-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #dce5f2;
+  background: #f2f6fd;
+  color: #263958;
+}
+.benefit-preview svg { flex: none; color: #344bfa; }
+.benefit-preview h3 { margin: 4px 0 6px; }
+.benefit-example { color: #4e6080; font-size: 13px; }
+.print-report-title { display: none; }
+@media print {
+  .print-report-title { display: block; }
+}
