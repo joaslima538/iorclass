@@ -1,5 +1,78 @@
-import {chromium} from 'playwright-core';
-import {readFileSync} from 'node:fs';
-const font=readFileSync('node_modules/@fontsource/barlow/files/barlow-latin-600-normal.woff2').toString('base64');
-const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1200,height:630},deviceScaleFactor:1});
-await page.setContent(`<style>@font-face{font-family:Barlow;src:url(data:font/woff2;base64,${font})}*{box-sizing:border-box}body{margin:0;background:#eeebfa;font-family:Barlow;color:#292443}.cover{width:1200px;height:630px;padding:66px 74px;position:relative;overflow:hidden}.logo{display:flex;align-items:center;gap:16px;color:#4942d8;font-size:52px;letter-spacing:-2px}.logo small{display:block;font-size:10px;letter-spacing:3px;margin-top:4px}.title{font-size:70px;line-height:1.07;letter-spacing:-2px;margin:46px 0 20px;position:relative;z-index:1}.title em{font-style:normal;color:#5745dc}.desc{font:23px Barlow;color:#8c7f9c;line-height:1.5}.badge{margin-top:31px;display:inline-flex;gap:14px;align-items:center;font:16px Barlow;color:#fff;background:#5144df;padding:14px 21px;border-radius:9px}.art{position:absolute;right:-120px;top:25px;width:430px;height:610px;background:#dfd7f3;border-radius:50%;transform:rotate(22deg)}.star{position:absolute;right:39px;bottom:22px;color:#c0afe3;font:340px Arial}.card{position:absolute;right:49px;top:215px;background:white;border:1px solid #d7c9ee;border-radius:20px;padding:28px;box-shadow:0 20px 60px #50407716;transform:rotate(-7deg);width:285px}.card small{font-size:14px;color:#b3a2c4;letter-spacing:1px}.card h3{font-size:28px;font-weight:600;margin:18px 0;color:#77608f}.row{display:flex;gap:12px;align-items:center;padding:16px 0;border-top:1px solid #eee7f6;color:#9e85b9;font-size:17px}.check{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#edf5ed;color:#86a58b}.url{position:absolute;bottom:40px;left:74px;font-size:16px;color:#a492b5;letter-spacing:1px}</style><div class="cover"><div class="art"></div><span class="star">✧</span><div class="logo"><svg width="58" height="64" viewBox="0 0 40 40"><path d="M5 7l10 4a19 19 0 0110 0l10-4-2 17c-2 9-10 13-13 14C12 35 6 30 6 23Z" fill="#4942d8"/><circle cx="14" cy="21" r="7" fill="white"/><circle cx="26" cy="21" r="7" fill="white"/><circle cx="15" cy="21" r="3" fill="#4942d8"/><circle cx="25" cy="21" r="3" fill="#4942d8"/><path d="m18 28 2 3 2-3" fill="#FBC407"/></svg><div>iorCLASS<small>GESTÃO PARA PROFESSORES</small></div></div><div class="title">Você nasceu para <em>ensinar.</em><br>A organização<br>deixa com a gente.</div><div class="desc">Aulas, alunos e finanças em um só lugar.</div><div class="badge">Conheça a iorCLASS <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></div><div class="card"><small>MAIS LEVEZA NO SEU DIA</small><h3>Seu talento,<br>bem acompanhado.</h3><div class="row"><span class="check">✓</span> Sua agenda organizada</div><div class="row"><span class="check">✓</span> Seus alunos por perto</div><div class="row"><span class="check">✓</span> Suas finanças em dia</div></div><div class="url">iorclass.onrender.com</div></div>`);await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:'public/images/iorclass-social-v1.png'});await browser.close();
+import { readFileSync } from "node:fs";
+import { chromium } from "playwright";
+
+const asset = (path) => readFileSync(new URL(path, import.meta.url)).toString("base64");
+const fonts = [600, 800].map((weight) => {
+  const data = asset(`../node_modules/@fontsource/barlow/files/barlow-latin-${weight}-normal.woff2`);
+  return `@font-face { font-family: Barlow; font-weight: ${weight}; src: url(data:font/woff2;base64,${data}); }`;
+});
+const dashboard = asset("../public/images/landing/painel.jpg");
+
+const browser = await chromium.launch({ executablePath: "/usr/bin/chromium", args: ["--no-sandbox"] });
+try {
+  const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
+  await page.setContent(`
+    <!doctype html>
+    <html lang="pt-BR">
+      <meta charset="utf-8">
+      <style>
+        ${fonts.join("\n")}
+        * { box-sizing: border-box; }
+        body {
+          margin: 0;
+          width: 1200px;
+          height: 630px;
+          overflow: hidden;
+          background: radial-gradient(circle, #ffffff24 1px, transparent 1.7px) 0 0 / 24px 24px,
+            radial-gradient(ellipse at 86% 8%, #149fff, transparent 55%),
+            linear-gradient(120deg, #0648b7, #006fd7 70%, #087ed2);
+          color: #fff;
+          font: 600 30px Barlow, sans-serif;
+        }
+        .copy { position: relative; z-index: 1; padding: 68px 0 0 72px; }
+        .brand { display: flex; gap: 13px; align-items: center; font-size: 45px; letter-spacing: 4px; }
+        h1 { margin: 38px 0 21px; font-size: 74px; line-height: .99; letter-spacing: -1.5px; font-weight: 800; }
+        h1 span { color: #ffdc3b; }
+        p { margin: 0; color: #f3f7ff; line-height: 1.3; }
+        .url { display: inline-block; margin-top: 30px; padding: 9px 17px; border: 1px solid #ffffff66; border-radius: 10px; font-size: 22px; background: #084ab0; }
+        .screen {
+          position: absolute;
+          top: 158px;
+          left: 611px;
+          width: 648px;
+          border: 5px solid #e6ecff;
+          border-radius: 22px;
+          box-shadow: 0 25px 70px #051d6366;
+          transform: rotate(-7deg);
+        }
+      </style>
+      <div class="copy">
+        <div class="brand">
+          <svg width="61" height="61" viewBox="0 0 40 40" aria-hidden="true">
+            <path d="M5 7l10 4a19 19 0 0110 0l10-4-2 17c-2 9-10 13-13 14C12 35 6 30 6 23Z" fill="#101c50"/>
+            <circle cx="14" cy="21" r="7" fill="white"/>
+            <circle cx="26" cy="21" r="7" fill="white"/>
+            <circle cx="15" cy="21" r="3" fill="#101c50"/>
+            <circle cx="25" cy="21" r="3" fill="#101c50"/>
+            <path d="m18 28 2 3 2-3" fill="#FBC407"/>
+          </svg>
+          iorCLASS
+        </div>
+        <h1>Gestão para<br><span>professores<br>particulares</span></h1>
+        <p>Aulas, alunos e finanças<br>em um só lugar.</p>
+        <span class="url">iorclass.onrender.com</span>
+      </div>
+      <img class="screen" src="data:image/jpeg;base64,${dashboard}" alt="Painel da iorCLASS">
+    </html>`);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await document.querySelector(".screen").decode();
+  });
+  await page.screenshot({
+    path: new URL("../public/images/iorclass-social-v2.jpg", import.meta.url).pathname,
+    type: "jpeg",
+    quality: 88,
+  });
+} finally {
+  await browser.close();
+}

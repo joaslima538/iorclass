@@ -57,4 +57,4 @@ Execute `npx playwright test --workers=1` para validar também navegação públ
 
 ## Compartilhamento social
 
-O HTML contém Open Graph e Twitter Card com URL pública `https://iorclass.onrender.com/` e capa PNG local de 1200 × 630. Ao trocar o domínio, atualize canonical, `og:url` e URLs de imagem em `index.html`. A capa pode ser regenerada com `node scripts/generate-social-cover.mjs` (Chromium local e dependências de desenvolvimento necessários). O WhatsApp pode manter a prévia anterior em cache após o deploy.
+O HTML contém Open Graph e Twitter Card com URL pública `https://iorclass.onrender.com/` e capa JPEG local de 1200 × 630. Ao trocar o domínio, atualize canonical, `og:url` e URLs de imagem em `index.html`. A capa pode ser regenerada com `node scripts/generate-social-cover.mjs` (Chromium local e dependências de desenvolvimento necessários). O WhatsApp pode manter a prévia anterior em cache após o deploy. Para testar uma prévia nova, compartilhe a URL com um parâmetro de versão, como `https://iorclass.onrender.com/?v=2`.
