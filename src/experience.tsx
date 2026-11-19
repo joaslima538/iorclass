@@ -2,6 +2,8 @@ import { assignmentsKey, assignmentStatus, bulletinsKey, groupsKey, initialGroup
 import type { Assignment, Bulletin } from "./local";
 import type { CSSProperties } from "react";
 import { useState } from "react";
+import { Brand, go } from "./public-navigation";
+import { Landing } from "./landing";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -10,7 +12,6 @@ import {
   Check,
   ChevronLeft,
   Copy,
-  GraduationCap,
   House,
   LogOut,
   Menu,
@@ -21,30 +22,15 @@ import {
   FolderOpen,
   Send,
 } from "lucide-react";
-const go = (route: string) => {
-  window.location.hash = route;
-  window.scrollTo(0, 0);
-};
-export function Brand() {
-  return (
-    <a className="public-brand" href="#inicio">
-      <span className="brand-owl">
-        ◉◉<i>▾</i>
-      </span>
-      <span>
-        ior<b>CLASS</b>
-        <small>GESTÃO PARA PROFESSORES</small>
-      </span>
-    </a>
-  );
-}
 export function PublicExperience({ route }: { route: string }) {
   const [role, setRole] = useState("professor");
   const [message, setMessage] = useState("");
   const [open, setOpen] = useState(false);
   const auth = route === "login" || route === "cadastro";
+  if (!auth) return <Landing />;
+
   return (
-    <div className={auth ? "public-site auth-page" : "public-site"}>
+    <div className="public-site auth-page">
       <header className="public-header">
         <Brand />
         <button
@@ -55,375 +41,143 @@ export function PublicExperience({ route }: { route: string }) {
           <Menu />
         </button>
         <nav className={open ? "expanded" : ""}>
-          {!auth && (
-            <>
-              <a
-                href="#recursos"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document
-                    .getElementById("recursos")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Recursos
-              </a>
-              <a
-                href="#planos"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document
-                    .getElementById("planos")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Planos
-              </a>
-            </>
-          )}
           <button onClick={() => go("login")}>Entrar</button>
           <button className="primary" onClick={() => go("cadastro")}>
             Começar grátis <ArrowUpRight size={15} />
           </button>
         </nav>
       </header>
-      {auth ? (
-        <div className="auth-layout">
-          <section className="auth-story">
-            <span className="public-pill">FEITO PARA QUEM ENSINA</span>
-            <h1>
-              Organize suas aulas,
-              <br />
-              agenda e finanças.
-            </h1>
+      <div className="auth-layout">
+        <section className="auth-story">
+          <span className="public-pill">FEITO PARA QUEM ENSINA</span>
+          <h1>
+            Organize suas aulas,
+            <br />
+            agenda e finanças.
+          </h1>
+          <p>
+            Tudo o que você precisa para a gestão das aulas.
+            <br />
+            Feito para professores particulares.
+          </p>
+          <div className="auth-quote">
+            <span>“</span>
             <p>
-              Tudo o que você precisa para a gestão das aulas.
-              <br />
-              Feito para professores particulares.
+              Ensinar é transformar. Organizar sua rotina também pode ser
+              simples.
             </p>
-            <div className="auth-quote">
-              <span>“</span>
-              <p>
-                Ensinar é transformar. Organizar sua rotina também pode ser
-                simples.
-              </p>
-              <b>iorCLASS · seu espaço para crescer</b>
-            </div>
-            <span className="auth-decoration">✧</span>
-          </section>
-          <section className="auth-form">
-            <button className="text-button" onClick={() => go("inicio")}>
-              <ChevronLeft size={15} /> Voltar ao site
-            </button>
-            <span className="eyebrow">ACESSO iorCLASS</span>
-            <h2>
-              {route === "cadastro"
-                ? "Criar uma conta"
-                : "Login Professor"}
-            </h2>
-            <p>
-              {route === "cadastro"
-                ? "Experimente por 30 dias. Sem cartão de crédito."
-                : "Entre no seu espaço e continue de onde parou."}
-            </p>
-            <div className="tabs auth-roles">
-              {["professor", "aluno"].map((r) => (
-                <button
-                  className={role === r ? "selected" : ""}
-                  key={r}
-                  onClick={() => setRole(r)}
-                >
-                  {r === "professor" ? "Sou professor" : "Sou aluno"}
-                </button>
-              ))}
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setMessage(
-                  "Este é um protótipo. Use o acesso demo abaixo para explorar sem criar uma conta real.",
-                );
-              }}
-            >
-              {route === "cadastro" && (
-                <label>
-                  Seu nome
-                  <input
-                    required
-                    autoComplete="name"
-                    placeholder="Como podemos te chamar?"
-                  />
-                </label>
-              )}
-              <label>
-                E-mail
-                <input
-                  required
-                  type="email"
-                  autoComplete="email"
-                  placeholder="voce@email.com"
-                />
-              </label>
-              <label>
-                Senha
-                <input
-                  required
-                  type="password"
-                  autoComplete={
-                    route === "cadastro" ? "new-password" : "current-password"
-                  }
-                  minLength={6}
-                  placeholder="Pelo menos 6 caracteres"
-                />
-              </label>
-              {route === "cadastro" && (
-                <label className="terms">
-                  <input type="checkbox" required /> Entendo que este cadastro é
-                  uma demonstração.
-                </label>
-              )}
-              <button className="primary full">
-                {route === "cadastro" ? "Criar minha conta" : "Entrar"}{" "}
-                <ArrowRight size={16} />
+            <b>iorCLASS · seu espaço para crescer</b>
+          </div>
+          <span className="auth-decoration">✧</span>
+        </section>
+        <section className="auth-form">
+          <button className="text-button" onClick={() => go("inicio")}>
+            <ChevronLeft size={15} /> Voltar ao site
+          </button>
+          <span className="eyebrow">ACESSO iorCLASS</span>
+          <h2>
+            {route === "cadastro"
+              ? "Criar uma conta"
+              : "Login Professor"}
+          </h2>
+          <p>
+            {route === "cadastro"
+              ? "Experimente por 30 dias. Sem cartão de crédito."
+              : "Entre no seu espaço e continue de onde parou."}
+          </p>
+          <div className="tabs auth-roles">
+            {["professor", "aluno"].map((r) => (
+              <button
+                className={role === r ? "selected" : ""}
+                key={r}
+                onClick={() => setRole(r)}
+              >
+                {r === "professor" ? "Sou professor" : "Sou aluno"}
               </button>
-            </form>
-            {message && (
-              <p className="auth-message" role="status">
-                {message}
-              </p>
+            ))}
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setMessage(
+                "Este é um protótipo. Use o acesso demo abaixo para explorar sem criar uma conta real.",
+              );
+            }}
+          >
+            {route === "cadastro" && (
+              <label>
+                Seu nome
+                <input
+                  required
+                  autoComplete="name"
+                  placeholder="Como podemos te chamar?"
+                />
+              </label>
             )}
-            <div className="auth-or">OU EXPLORE SEM CADASTRO</div>
-            <button
-              className="demo-login"
-              onClick={() => go(role === "professor" ? "professor" : "aluno")}
-            >
-              <MessageCircle size={17} /> Login demo ·{" "}
-              {role === "professor" ? "Professor" : "Aluno"}{" "}
+            <label>
+              E-mail
+              <input
+                required
+                type="email"
+                autoComplete="email"
+                placeholder="voce@email.com"
+              />
+            </label>
+            <label>
+              Senha
+              <input
+                required
+                type="password"
+                autoComplete={
+                  route === "cadastro" ? "new-password" : "current-password"
+                }
+                minLength={6}
+                placeholder="Pelo menos 6 caracteres"
+              />
+            </label>
+            {route === "cadastro" && (
+              <label className="terms">
+                <input type="checkbox" required /> Entendo que este cadastro é
+                uma demonstração.
+              </label>
+            )}
+            <button className="primary full">
+              {route === "cadastro" ? "Criar minha conta" : "Entrar"}{" "}
               <ArrowRight size={16} />
             </button>
-            <p className="auth-switch">
-              {route === "cadastro"
-                ? "Já tem uma conta?"
-                : "Ainda não tem conta?"}{" "}
-              <button
-                onClick={() => {
-                  setMessage("");
-                  go(route === "cadastro" ? "login" : "cadastro");
-                }}
-              >
-                {route === "cadastro" ? "Entrar" : "Cadastre-se grátis"}
-              </button>
+          </form>
+          {message && (
+            <p className="auth-message" role="status">
+              {message}
             </p>
-            <small className="auth-disclaimer">
-              Demonstração com dados fictícios. Sem autenticação real.
-            </small>
-          </section>
-        </div>
-      ) : (
-        <>
-          <section className="landing-hero">
-            <div>
-              <span className="public-pill">
-                <span /> iorCLASS · GESTÃO PARA PROFESSORES
-              </span>
-              <h1>Gestão para <em>professores particulares.</em></h1>
-              <p>Organize aulas, alunos e finanças em um só lugar.<br />Mais praticidade para sua rotina de ensino.</p>
-              <div className="landing-actions">
-                <button className="primary" onClick={() => go("cadastro")}>
-                  Quero meus 30 dias grátis <ArrowUpRight size={18} />
-                </button>
-                <button
-                  className="landing-demo"
-                  onClick={() => go("professor")}
-                >
-                  Login demo <ArrowRight size={17} />
-                </button>
-              </div>
-              <small>
-                <Check size={13} /> Sem cartão de crédito <span>·</span> Feito
-                para professores particulares
-              </small>
-            </div>
-            <div className="landing-art">
-              <div className="landing-orbit" />
-              <div className="product-preview">
-                <div className="preview-header">
-                  <Brand />
-                  <span>
-                    Meu espaço <span className="status green">Tudo em dia</span>
-                  </span>
-                </div>
-                <span className="eyebrow">
-                  SEGUNDA-FEIRA, NOVAS POSSIBILIDADES
-                </span>
-                <h2>Bom dia, Carol ☀</h2>
-                <p>Confira a programação de hoje.</p>
-                <div className="landing-mini-stats">
-                  <div>
-                    Recebido no mês
-                    <b>
-                      R$ 6.840<span>↗ 12,8%</span>
-                    </b>
-                  </div>
-                  <div>
-                    Alunos ativos
-                    <b>
-                      12<span>+2 este mês</span>
-                    </b>
-                  </div>
-                </div>
-                <h3>Próximas aulas</h3>
-                {["Mariana Costa", "João Pedro", "Beatriz Almeida"].map(
-                  (n, i) => (
-                    <div className="preview-lesson" key={n}>
-                      <span>{["09:00", "10:30", "14:00"][i]}</span>
-                      <i>{n[0]}</i>
-                      <div>
-                        <b>{n}</b>
-                        <small>Canto · Técnica e expressão</small>
-                      </div>
-                      <Check size={16} />
-                    </div>
-                  ),
-                )}
-              </div>
-              <div className="art-note">
-                <MessageCircle size={23} />
-                <div>
-                  Menos tarefas.<b>Mais tempo para ensinar.</b>
-                </div>
-              </div>
-              <span className="art-star">✧</span>
-            </div>
-          </section>
-          <div className="landing-trust">
-            PARA QUEM ENSINA COM PROPÓSITO <span>·</span> Canto e música{" "}
-            <span>·</span> Idiomas <span>·</span> Reforço e muito mais
-          </div>
-          <section className="landing-features" id="recursos">
-            <span className="eyebrow">TUDO CONECTADO, TUDO MAIS SIMPLES</span>
-            <h2>Aulas, alunos e financeiro.</h2>
-            <p>Consulte horários, cadastros e pagamentos em um só lugar.</p>
-            <div>
-              {[
-                [
-                  CalendarDays,
-                  "Agenda de aulas",
-                  "Organize horários, acompanhe presenças e reagende suas aulas.",
-                ],
-                [
-                  Users,
-                  "Cadastro e acompanhamento",
-                  "Dados, evolução e atividades em uma ficha para acompanhar cada conquista.",
-                ],
-                [
-                  Wallet,
-                  "Finanças sem complicação",
-                  "Saiba o que entrou, o que falta receber e planeje o próximo capítulo.",
-                ],
-              ].map(([Icon, title, text]) => {
-                const I = Icon as typeof House;
-                return (
-                  <article key={String(title)}>
-                    <I size={27} />
-                    <h3>{String(title)}</h3>
-                    <p>{String(text)}</p>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-          <section className="landing-student">
-            <div>
-              <span className="eyebrow">
-                UMA EXPERIÊNCIA PARA OS DOIS LADOS
-              </span>
-              <h2>
-                Seu aluno também tem
-                <br />
-                um espaço para evoluir.
-              </h2>
-              <p>
-                Aulas, atividades, recados e pagamentos.
-                <br />
-                Tudo organizado, sempre por perto.
-              </p>
-              <button className="secondary" onClick={() => go("aluno")}>
-                Conhecer o app do aluno <ArrowUpRight size={16} />
-              </button>
-            </div>
-            <div className="student-teaser">
-              <GraduationCap size={32} />
-              <h3>Olá, Mariana ✦</h3>
-              <p>Acompanhe suas próximas aulas.</p>
-              <div>
-                <CalendarDays size={18} />
-                <span>
-                  Próxima aula<b>Segunda-feira · 09:00</b>
-                </span>
-                <ArrowRight size={17} />
-              </div>
-            </div>
-          </section>
-          <section className="landing-pricing" id="planos">
-            <span className="eyebrow">INVISTA EM UMA ROTINA MAIS LEVE</span>
-            <h2>Escolha seu plano.</h2>
-            <p>30 dias grátis para descobrir uma nova forma de organizar.</p>
-            <div className="pricing-grid">
-              {[
-                ["Mensal", "99", "por mês", "Liberdade para começar"],
-                [
-                  "Semestral",
-                  "415",
-                  "a cada 6 meses",
-                  "Um passo a mais no seu planejamento",
-                ],
-                ["Anual", "717", "por ano", "Plano anual"],
-              ].map(([p, v, d, text], i) => (
-                <article className={i === 2 ? "featured" : ""} key={p}>
-                  {i === 2 && (
-                    <span className="price-label">MELHOR ESCOLHA</span>
-                  )}
-                  <h3>{p}</h3>
-                  <p>{text}</p>
-                  <strong>
-                    <small>R$</small> {v}
-                  </strong>
-                  <span>{d}</span>
-                  <ul>
-                    <li>
-                      <Check size={14} /> Agenda e gestão de alunos
-                    </li>
-                    <li>
-                      <Check size={14} /> Financeiro e relatórios
-                    </li>
-                    <li>
-                      <Check size={14} /> Atividades e app do aluno
-                    </li>
-                  </ul>
-                  <button
-                    className={i === 2 ? "primary" : "secondary"}
-                    onClick={() => go("cadastro")}
-                  >
-                    Começar grátis <ArrowRight size={15} />
-                  </button>
-                </article>
-              ))}
-            </div>
-            <small>
-              Valores de referência do produto. Este protótipo não realiza
-              contratações.
-            </small>
-          </section>
-          <footer className="public-footer">
-            <Brand />
-            <p>Gestão para professores particulares.</p>
-            <button onClick={() => go("login")}>
-              Entrar no meu espaço <ArrowRight size={15} />
+          )}
+          <div className="auth-or">OU EXPLORE SEM CADASTRO</div>
+          <button
+            className="demo-login"
+            onClick={() => go(role === "professor" ? "professor" : "aluno")}
+          >
+            <MessageCircle size={17} /> Login demo ·{" "}
+            {role === "professor" ? "Professor" : "Aluno"}{" "}
+            <ArrowRight size={16} />
+          </button>
+          <p className="auth-switch">
+            {route === "cadastro"
+              ? "Já tem uma conta?"
+              : "Ainda não tem conta?"}{" "}
+            <button
+              onClick={() => {
+                setMessage("");
+                go(route === "cadastro" ? "login" : "cadastro");
+              }}
+            >
+              {route === "cadastro" ? "Entrar" : "Cadastre-se grátis"}
             </button>
-          </footer>
-        </>
-      )}
+          </p>
+          <small className="auth-disclaimer">
+            Demonstração com dados fictícios. Sem autenticação real.
+          </small>
+        </section>
+      </div>
     </div>
   );
 }

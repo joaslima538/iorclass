@@ -2389,14 +2389,20 @@ function Stat({
     </div>
   );
 }
+const appRoutes = ["inicio", "login", "cadastro", "professor", "aluno"];
+function readRoute() {
+  const hash = window.location.hash.slice(1);
+  return appRoutes.includes(hash) ? hash : "inicio";
+}
+
 function ExperienceRouter() {
-  const [route, setRoute] = useState(
-    () => window.location.hash.slice(1) || "inicio",
-  );
+  const [route, setRoute] = useState(readRoute);
   useEffect(() => {
     const update = () => {
-      setRoute(window.location.hash.slice(1) || "inicio");
-      window.scrollTo(0, 0);
+      setRoute(readRoute());
+      if (!window.location.hash || appRoutes.includes(window.location.hash.slice(1))) {
+        window.scrollTo(0, 0);
+      }
     };
     window.addEventListener("hashchange", update);
     return () => window.removeEventListener("hashchange", update);
