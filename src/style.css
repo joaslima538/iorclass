@@ -5108,3 +5108,43 @@ main { margin-left:240px; }
 @media print {
   .help-chat { display: none !important; }
 }
+
+.desktop-menu-toggle { display: none; }
+@media (min-width: 701px) {
+  .desktop-menu-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border: 1px solid #ffffff35;
+    border-radius: 6px;
+    color: #fff;
+  }
+  .desktop-menu-toggle:hover { background: #ffffff20; }
+  .app.sidebar-collapsed > .sidebar { display: none; }
+  .app.sidebar-collapsed > main { margin-left: 0; }
+}
+.chat-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #4e5f75;
+}
+.chat-typing-dots { display: inline-flex; gap: 4px; }
+.chat-typing-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #344bfa;
+  animation: help-typing 1s ease-in-out infinite;
+}
+.chat-typing-dots i:nth-child(2) { animation-delay: .12s; }
+.chat-typing-dots i:nth-child(3) { animation-delay: .24s; }
+@keyframes help-typing {
+  0%, 60%, 100% { opacity: .45; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-typing-dots i { animation: none; }
+}

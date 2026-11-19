@@ -57,6 +57,12 @@ const topics = [
     next: "Quando a resposta aparecer em Atividades, você pode marcar como avaliada ou pedir para refazer.",
   },
   {
+    keywords: ["beneficio", "beneficios", "vantagem", "oferta", "ofertas", "flui"],
+    prompt: "O que é a tela de benefícios?",
+    answer: "Meus Benefícios reúne as vantagens e ofertas destinadas aos professores. Na demonstração, você encontra um exemplo de catálogo da Flui, com recursos para aulas de inglês.",
+    next: "Para encontrar o catálogo, abra Meus Benefícios no menu lateral. O cartão da Flui está identificado como exemplo da demonstração.",
+  },
+  {
     keywords: ["perfil", "configuracoes", "estudio", "cor"],
     prompt: "Como personalizo meu perfil?",
     answer: "Em Configurações, edite seu nome, estúdio, área de ensino e cor de destaque. Use Salvar perfil para aplicar as mudanças.",
@@ -73,6 +79,7 @@ const initialMessage: ChatMessage = {
 export function HelpChat({ open, onClose, onSupport }: { open: boolean; onClose: () => void; onSupport: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([initialMessage]);
   const [draft, setDraft] = useState("");
+  const [pendingReply, setPendingReply] = useState("");
   const [lastTopic, setLastTopic] = useState<(typeof topics)[number]>();
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
@@ -82,11 +89,19 @@ export function HelpChat({ open, onClose, onSupport }: { open: boolean; onClose:
   }, [open]);
   useEffect(() => {
     if (open && log.current) log.current.scrollTop = log.current.scrollHeight;
-  }, [open, messages]);
+  }, [open, messages, pendingReply]);
+  useEffect(() => {
+    if (!pendingReply) return;
+    const timeout = window.setTimeout(() => {
+      setMessages((current) => [...current, { role: "assistant", text: pendingReply }]);
+      setPendingReply("");
+    }, 850);
+    return () => window.clearTimeout(timeout);
+  }, [pendingReply]);
 
   function send(text: string) {
     const question = text.trim();
-    if (!question) return;
+    if (!question || pendingReply) return;
     const normalized = question.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
     const words = new Set(normalized.match(/[a-z]+/g));
     let match: (typeof topics)[number] | undefined;
@@ -110,7 +125,8 @@ export function HelpChat({ open, onClose, onSupport }: { open: boolean; onClose:
     } else if (lastTopic && /^(e |me de |mostre |pode )?(como (continuo|faco)|onde (vejo|encontro)|depois|mais detalhes|um exemplo|sim)[?!.\s]*$/.test(normalized)) {
       reply = lastTopic.next;
     }
-    setMessages((current) => [...current, { role: "user", text: question }, { role: "assistant", text: reply }]);
+    setMessages((current) => [...current, { role: "user", text: question }]);
+    setPendingReply(reply);
     setDraft("");
     input.current?.focus();
   }
@@ -126,13 +142,16 @@ export function HelpChat({ open, onClose, onSupport }: { open: boolean; onClose:
         {messages.map((message, index) =>
           <p key={index} className={`chat-message chat-message-${message.role}`}><span className="sr-only">{message.role === "user" ? "Você: " : "iorIA: "}</span>{message.text}</p>
         )}
+        {pendingReply && <div className="chat-message chat-typing" role="status">
+          iorIA digitando<span className="chat-typing-dots" aria-hidden="true"><i /><i /><i /></span>
+        </div>}
       </div>
       {messages.length === 1 && <div className="help-chat-prompts" aria-label="Perguntas sugeridas">
         {[topics[0], topics[1], topics[5]].map((topic) => <button key={topic.prompt} onClick={() => send(topic.prompt)}>{topic.prompt}</button>)}
       </div>}
       <form className="help-chat-composer" onSubmit={(event) => { event.preventDefault(); send(draft); }}>
         <input ref={input} aria-label="Sua mensagem" placeholder="Digite sua dúvida..." value={draft} maxLength={400} onChange={(event) => setDraft(event.target.value)} />
-        <button className="primary" aria-label="Enviar mensagem" disabled={!draft.trim()}><Send size={17} /></button>
+        <button className="primary" aria-label="Enviar mensagem" disabled={!draft.trim() || Boolean(pendingReply)}><Send size={17} /></button>
       </form>
       <button className="text-button help-chat-support" onClick={onSupport}>Central de ajuda <ArrowUpRight size={14} /></button>
     </section>

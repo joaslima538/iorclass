@@ -191,3 +191,28 @@ test('header summary uses demo records, hides persistently and has no sidebar gu
  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
  await page.screenshot({path:'/tmp/iorclass-header-mobile.png',fullPage:true});
 });
+
+test("desktop sidebar collapses persistently without affecting the mobile drawer", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto("http://127.0.0.1:5173/#professor");
+  const sidebar = page.locator("#teacher-sidebar");
+  const collapse = page.getByRole("button", { name: "Recolher menu lateral" });
+  await expect(sidebar).toBeVisible();
+  await collapse.click();
+  await expect(sidebar).toBeHidden();
+  await expect(page.locator(".app > main")).toHaveCSS("margin-left", "0px");
+  await page.reload();
+  const expand = page.getByRole("button", { name: "Abrir menu lateral" });
+  await expect(expand).toHaveAttribute("aria-expanded", "false");
+  await expect(sidebar).toBeHidden();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(expand).toBeHidden();
+  await page.getByRole("button", { name: "Menu do professor", exact: true }).click();
+  await expect(sidebar).toBeVisible();
+  await sidebar.getByRole("button", { name: "Arquivos", exact: true }).click();
+  await expect(sidebar).toBeHidden();
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await expand.click();
+  await expect(sidebar).toBeVisible();
+  await expect(collapse).toHaveAttribute("aria-expanded", "true");
+});

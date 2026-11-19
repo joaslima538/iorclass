@@ -249,7 +249,10 @@ test("help opens a local conversation with follow-ups and keeps it on reopen", a
   const chat = page.getByRole("dialog", { name: "Ajuda iorIA" });
   await expect(chat.getByText("Simulação · sem consumo de créditos")).toBeVisible();
   await chat.getByRole("button", { name: "Como cadastro um aluno?" }).click();
+  const typing = chat.getByRole("status");
+  await expect(typing).toHaveText("iorIA digitando");
   await expect(chat.getByRole("log")).toContainText("Listar Alunos");
+  await expect(typing).toHaveCount(0);
   const message = chat.getByRole("textbox", { name: "Sua mensagem" });
   await message.fill("E depois?");
   await message.press("Enter");
@@ -262,6 +265,9 @@ test("help opens a local conversation with follow-ups and keeps it on reopen", a
   await expect(trigger).toBeFocused();
   await trigger.click();
   await expect(chat.getByRole("log")).toContainText("Ver tela");
+  await message.fill("O que é a tela de benefícios?");
+  await message.press("Enter");
+  await expect(chat.getByRole("log")).toContainText("exemplo de catálogo da Flui");
 });
 
 test("student and lead view switches persist and leads can move from the list", async ({ page }) => {

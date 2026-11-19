@@ -46,6 +46,8 @@ import {
   Copy,
   Mail,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Mic,
   ExternalLink,
   TrendingUp,
@@ -199,6 +201,7 @@ function App() {
   const [studentLayout, setStudentLayout] = useLocal<"Lista" | "Kanban">("ior-student-layout", "Lista");
   const [leadLayout, setLeadLayout] = useLocal<"Lista" | "Kanban">("ior-lead-layout", "Kanban");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useLocal("ior-sidebar-collapsed", false);
   const helpTrigger = React.useRef<HTMLButtonElement>(null);
 
   function closeHelp() {
@@ -520,8 +523,8 @@ function App() {
     );
   }
   return (
-    <div className="app">
-      <aside className={mobile ? "sidebar open" : "sidebar"}>
+    <div className={sidebarCollapsed ? "app sidebar-collapsed" : "app"}>
+      <aside id="teacher-sidebar" className={mobile ? "sidebar open" : "sidebar"}>
         <a className="logo" onClick={() => navigate("Início")}>
           <Owl />
           <span>
@@ -572,7 +575,17 @@ function App() {
       <main>
         <header className="topbar">
           <div className="breadcrumb">
-            <button className="mobile-menu" aria-label="Menu do professor" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
+            <button
+              className="desktop-menu-toggle"
+              aria-label={sidebarCollapsed ? "Abrir menu lateral" : "Recolher menu lateral"}
+              title={sidebarCollapsed ? "Abrir menu lateral" : "Recolher menu lateral"}
+              aria-expanded={!sidebarCollapsed}
+              aria-controls="teacher-sidebar"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+            </button>
+            <button className="mobile-menu" aria-label="Menu do professor" aria-expanded={mobile} aria-controls="teacher-sidebar" onClick={() => setMobile(!mobile)}>
               <Menu size={20} />
             </button>
             Meu espaço <span>/</span>
